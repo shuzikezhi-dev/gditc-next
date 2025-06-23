@@ -473,8 +473,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
     sectors.forEach((sector: Sector) => {
       if (sector.artcileId) {
         languages.forEach(lang => {
+          const sectorId = sector.id ? String(sector.id) : '1';
+          const articleId = sector.artcileId!; // 使用非空断言，因为已经检查过了
           paths.push({
-            params: { params: ['sectors', lang, String(sector.id || 1), sector.artcileId] }
+            params: { params: ['sectors', lang, sectorId, articleId] }
           });
         });
       }
@@ -528,7 +530,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       if (sector) {
         // 获取相同类型的相关文章
         relatedArticles = allSectors
-          .filter(s => s.artcileId !== itemId && s.type === sector.type)
+          .filter(s => s.artcileId !== itemId && s.type === sector!.type)
           .slice(0, 7) as ExtendedSector[];
       }
     }
