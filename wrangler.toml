@@ -1,0 +1,9 @@
+name = "ditc-frontend"
+compatibility_date = "2025-06-23"
+
+[build]
+command = "npm run build"
+directory = "out"
+
+[[build.environment_variables]]
+NEXT_PUBLIC_STRAPI_API_URL = "https://wonderful-serenity-47deffe3a2.strapiapp.com/api" 
