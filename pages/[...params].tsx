@@ -26,7 +26,7 @@ interface ArticleDetailProps {
 
 export default function ArticleDetail({ article, sector, relatedArticles, channelType, language, id }: ArticleDetailProps) {
   const router = useRouter();
-  
+
   const currentItem = article || sector;
 
   if (!currentItem) {
@@ -73,12 +73,12 @@ export default function ArticleDetail({ article, sector, relatedArticles, channe
   // 语言切换处理函数
   const handleLanguageChange = async (newLanguage: string) => {
     if (newLanguage === language) return;
-    
+
     try {
       if (channelType === 'sectors' && sector?.artcileId) {
         // 根据articleId查找相同文章的不同语言版本
         const targetSector = await getSectorByArticleIdAndLanguage(sector.artcileId, newLanguage);
-        
+
         if (targetSector) {
           // 构建新的URL并跳转
           const newUrl = `/sectors/${newLanguage}/${targetSector.id}/${targetSector.artcileId}`;
@@ -231,11 +231,14 @@ export default function ArticleDetail({ article, sector, relatedArticles, channe
               <div className="flex flex-wrap -mx-4">
                 {/* Main Content */}
                 <div className="w-full px-4 lg:w-8/12">
-                  <div>
+                  <div style={{
+
+                    wordBreak: 'break-all'
+                  }}>
                     <h2 className="wow fadeInUp mb-8 text-2xl font-bold text-dark dark:text-white sm:text-3xl md:text-[35px] md:leading-[1.28]" data-wow-delay=".1s">
                       {currentItem.title}
                     </h2>
-                    
+
                     {getDescription() && (
                       <p className="mb-6 text-base wow fadeInUp text-body-color dark:text-dark-6" data-wow-delay=".1s">
                         {getDescription()}
@@ -312,7 +315,7 @@ export default function ArticleDetail({ article, sector, relatedArticles, channe
                           )}
                         </div>
                       </div>
-                      
+
                       {/* Share */}
                       <div className="w-full px-4 md:w-1/2">
                         <div className="flex items-center wow fadeInUp md:justify-end" data-wow-delay=".1s">
@@ -322,20 +325,20 @@ export default function ArticleDetail({ article, sector, relatedArticles, channe
                           <div className="flex items-center gap-[10px]">
                             <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`} target="_blank" rel="noopener noreferrer">
                               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#1877F2"/>
-                                <path d="M17 15.5399V12.7518C17 11.6726 17.8954 10.7976 19 10.7976H21V7.86631L18.285 7.67682C15.9695 7.51522 14 9.30709 14 11.5753V15.5399H11V18.4712H14V24.3334H17V18.4712H20L21 15.5399H17Z" fill="white"/>
+                                <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#1877F2" />
+                                <path d="M17 15.5399V12.7518C17 11.6726 17.8954 10.7976 19 10.7976H21V7.86631L18.285 7.67682C15.9695 7.51522 14 9.30709 14 11.5753V15.5399H11V18.4712H14V24.3334H17V18.4712H20L21 15.5399H17Z" fill="white" />
                               </svg>
                             </a>
                             <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}&text=${encodeURIComponent(currentItem.title)}`} target="_blank" rel="noopener noreferrer">
                               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#55ACEE"/>
-                                <path d="M24.2945 11.375C24.4059 11.2451 24.2607 11.0755 24.0958 11.1362C23.728 11.2719 23.3918 11.3614 22.8947 11.4166C23.5062 11.0761 23.7906 10.5895 24.0219 9.99339C24.0777 9.84961 23.9094 9.71915 23.7645 9.78783C23.1759 10.0669 22.5408 10.274 21.873 10.3963C21.2129 9.7421 20.272 9.33331 19.2312 9.33331C17.2325 9.33331 15.6117 10.8406 15.6117 12.6993C15.6117 12.9632 15.6441 13.2202 15.7051 13.4663C12.832 13.3324 10.2702 12.1034 8.49031 10.2188C8.36832 10.0897 8.14696 10.1068 8.071 10.2643C7.86837 10.6846 7.7554 11.1509 7.7554 11.6418C7.7554 12.8093 8.39417 13.8395 9.36518 14.4431C8.92981 14.4301 8.51344 14.3452 8.12974 14.2013C7.94292 14.1312 7.72877 14.2543 7.75387 14.4427C7.94657 15.8893 9.11775 17.0827 10.6295 17.3647C10.3259 17.442 10.0061 17.483 9.67537 17.483C9.59517 17.483 9.51567 17.4805 9.43688 17.4756C9.23641 17.4632 9.07347 17.6426 9.15942 17.8141C9.72652 18.946 10.951 19.7361 12.376 19.7607C11.1374 20.6637 9.57687 21.2017 7.88109 21.2017C7.672 21.2017 7.5823 21.4706 7.7678 21.5617C9.20049 22.266 10.832 22.6666 12.5656 22.6666C19.2231 22.6666 22.8631 17.5377 22.8631 13.0896C22.8631 12.944 22.8594 12.7984 22.8528 12.6542C23.3932 12.2911 23.8789 11.8595 24.2945 11.375Z" fill="white"/>
+                                <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#55ACEE" />
+                                <path d="M24.2945 11.375C24.4059 11.2451 24.2607 11.0755 24.0958 11.1362C23.728 11.2719 23.3918 11.3614 22.8947 11.4166C23.5062 11.0761 23.7906 10.5895 24.0219 9.99339C24.0777 9.84961 23.9094 9.71915 23.7645 9.78783C23.1759 10.0669 22.5408 10.274 21.873 10.3963C21.2129 9.7421 20.272 9.33331 19.2312 9.33331C17.2325 9.33331 15.6117 10.8406 15.6117 12.6993C15.6117 12.9632 15.6441 13.2202 15.7051 13.4663C12.832 13.3324 10.2702 12.1034 8.49031 10.2188C8.36832 10.0897 8.14696 10.1068 8.071 10.2643C7.86837 10.6846 7.7554 11.1509 7.7554 11.6418C7.7554 12.8093 8.39417 13.8395 9.36518 14.4431C8.92981 14.4301 8.51344 14.3452 8.12974 14.2013C7.94292 14.1312 7.72877 14.2543 7.75387 14.4427C7.94657 15.8893 9.11775 17.0827 10.6295 17.3647C10.3259 17.442 10.0061 17.483 9.67537 17.483C9.59517 17.483 9.51567 17.4805 9.43688 17.4756C9.23641 17.4632 9.07347 17.6426 9.15942 17.8141C9.72652 18.946 10.951 19.7361 12.376 19.7607C11.1374 20.6637 9.57687 21.2017 7.88109 21.2017C7.672 21.2017 7.5823 21.4706 7.7678 21.5617C9.20049 22.266 10.832 22.6666 12.5656 22.6666C19.2231 22.6666 22.8631 17.5377 22.8631 13.0896C22.8631 12.944 22.8594 12.7984 22.8528 12.6542C23.3932 12.2911 23.8789 11.8595 24.2945 11.375Z" fill="white" />
                               </svg>
                             </a>
                             <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`} target="_blank" rel="noopener noreferrer">
                               <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#007AB9"/>
-                                <path d="M11.7836 10.1666C11.7833 10.8452 11.3716 11.4559 10.7426 11.7106C10.1137 11.9654 9.39306 11.8134 8.92059 11.3263C8.44811 10.8392 8.31813 10.1143 8.59192 9.49341C8.86572 8.87251 9.48862 8.4796 10.1669 8.49996C11.0678 8.527 11.784 9.26533 11.7836 10.1666ZM11.8336 13.0666H8.50024V23.4999H11.8336V13.0666ZM17.1003 13.0666H13.7836V23.4999H17.0669V18.0249C17.0669 14.9749 21.0419 14.6916 21.0419 18.0249V23.4999H24.3336V16.8916C24.3336 11.75 18.4503 11.9416 17.0669 14.4666L17.1003 13.0666Z" fill="white"/>
+                                <path d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z" fill="#007AB9" />
+                                <path d="M11.7836 10.1666C11.7833 10.8452 11.3716 11.4559 10.7426 11.7106C10.1137 11.9654 9.39306 11.8134 8.92059 11.3263C8.44811 10.8392 8.31813 10.1143 8.59192 9.49341C8.86572 8.87251 9.48862 8.4796 10.1669 8.49996C11.0678 8.527 11.784 9.26533 11.7836 10.1666ZM11.8336 13.0666H8.50024V23.4999H11.8336V13.0666ZM17.1003 13.0666H13.7836V23.4999H17.0669V18.0249C17.0669 14.9749 21.0419 14.6916 21.0419 18.0249V23.4999H24.3336V16.8916C24.3336 11.75 18.4503 11.9416 17.0669 14.4666L17.1003 13.0666Z" fill="white" />
                               </svg>
                             </a>
                           </div>
@@ -375,8 +378,8 @@ export default function ArticleDetail({ article, sector, relatedArticles, channe
                                     href={`/${channelType}/${language}/${relatedItem.id || 1}/${(relatedItem as any).artcileId || relatedItem.id}`}
                                     className="inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg"
                                   >
-                                    {relatedItem.title.length > 50 
-                                      ? `${relatedItem.title.substring(0, 50)}...` 
+                                    {relatedItem.title.length > 50
+                                      ? `${relatedItem.title.substring(0, 50)}...`
                                       : relatedItem.title}
                                   </a>
                                 </h4>
@@ -404,7 +407,7 @@ export default function ArticleDetail({ article, sector, relatedArticles, channe
                 </h2>
                 <span className="mb-10 inline-block h-[2px] w-20 bg-primary"></span>
               </div>
-              
+
               {relatedArticles.slice(4, 7).map((item, index) => (
                 <div key={item.id || index} className="w-full px-4 md:w-1/2 lg:w-1/3">
                   <div className="mb-10 wow fadeInUp group">
@@ -495,7 +498,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   try {
     const pathParams = params?.params as string[];
-    
+
     // 新路由格式: /{channel}/{lang}/{id}/{itemId}
     if (!pathParams || pathParams.length !== 4) {
       return {
@@ -504,7 +507,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     }
 
     const [channelType, language, id, itemId] = pathParams;
-    
+
     let article: ExtendedArticle | undefined;
     let sector: ExtendedSector | undefined;
     let relatedArticles: (ExtendedArticle | ExtendedSector)[] = [];
