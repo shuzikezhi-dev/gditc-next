@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Head from 'next/head'
-import { GetServerSideProps } from 'next'
+import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getEvents, type Event as StrapiEvent } from '../lib/strapi'
@@ -310,7 +310,7 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     const events = await getEvents()
     // 将Strapi事件转换为带有id的Event类型

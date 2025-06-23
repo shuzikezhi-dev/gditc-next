@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import { GetServerSideProps } from 'next'
+import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
-import { getAbout, type About } from '../lib/strapi'
+import { getAbout } from '../lib/strapi'
 
 interface AboutData {
   title: string
@@ -483,7 +483,7 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     const aboutData = await getAbout()
     return {

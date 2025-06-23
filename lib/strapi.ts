@@ -79,7 +79,7 @@ export interface Article {
         url: string;
         alternativeText?: string;
       };
-    };
+    } | null;
   } | null;
   author?: {
     data: {
@@ -87,7 +87,7 @@ export interface Article {
         name: string;
         email: string;
       };
-    };
+    } | null;
   } | null;
   category?: {
     data: {
@@ -95,7 +95,7 @@ export interface Article {
         name: string;
         slug: string;
       };
-    };
+    } | null;
   } | null;
   blocks?: any[] | null;
   createdAt: string;
@@ -235,7 +235,7 @@ export const getAllPages = async (): Promise<{ slug: string }[]> => {
   }
 };
 
-// 获取文章列表 - 修复序列化问题
+// 获取文章列表 - 修复新的数据结构
 export const getArticles = async (limit?: number): Promise<Article[]> => {
   try {
     const queryParams = limit 
@@ -245,22 +245,65 @@ export const getArticles = async (limit?: number): Promise<Article[]> => {
       `/articles${queryParams}`
     );
     
-    return response.data.data.map((article: { attributes: Article }) => {
-      const attrs = article.attributes;
-      // 确保所有必需字段都有值，避免 undefined 序列化错误
-      return {
-        title: attrs.title || '',
-        slug: attrs.slug || '',
-        description: attrs.description || '',
-        cover: attrs.cover ?? null,
-        author: attrs.author ?? null, 
-        category: attrs.category ?? null,
-        blocks: attrs.blocks ?? null,
-        createdAt: attrs.createdAt || new Date().toISOString(),
-        updatedAt: attrs.updatedAt || new Date().toISOString(),
-        publishedAt: attrs.publishedAt || new Date().toISOString(),
-      };
-    });
+    // 检查响应数据结构
+    if (!response.data || !response.data.data || !Array.isArray(response.data.data)) {
+      console.warn('Invalid articles data structure:', response.data);
+      return [];
+    }
+    
+    return response.data.data
+      .map((article: any) => {
+        // 新的Strapi版本返回平面结构，不需要检查 article.attributes
+        console.log('Processing article:', article);
+        
+        // 确保必需字段存在
+        if (!article.title || !article.slug) {
+          console.warn('Article missing required fields:', article);
+          return null;
+        }
+        
+        // 处理嵌套对象的数据结构
+        const processedCover = article.cover ? {
+          data: {
+            attributes: {
+              url: article.cover.url || '',
+              alternativeText: article.cover.alternativeText || ''
+            }
+          }
+        } : null;
+
+        const processedAuthor = article.author ? {
+          data: {
+            attributes: {
+              name: article.author.name || '',
+              email: article.author.email || ''
+            }
+          }
+        } : null;
+
+        const processedCategory = article.category ? {
+          data: {
+            attributes: {
+              name: article.category.name || '',
+              slug: article.category.slug || ''
+            }
+          }
+        } : null;
+        
+        return {
+          title: article.title,
+          slug: article.slug,
+          description: article.description || '',
+          cover: processedCover,
+          author: processedAuthor,
+          category: processedCategory,
+          blocks: article.blocks || null,
+          createdAt: article.createdAt || new Date().toISOString(),
+          updatedAt: article.updatedAt || new Date().toISOString(),
+          publishedAt: article.publishedAt || new Date().toISOString(),
+        } as Article;
+      })
+      .filter((article): article is Article => article !== null);
   } catch (error) {
     console.error('Error fetching articles:', error);
     return [];
@@ -274,11 +317,36 @@ export const getArticleBySlug = async (slug: string): Promise<Article | null> =>
       `/articles?filters[slug][$eq]=${slug}&populate=*`
     );
     
-    if (response.data.data.length === 0) {
+    if (!response.data.data || response.data.data.length === 0) {
       return null;
     }
     
-    return response.data.data[0].attributes;
+    const article = response.data.data[0];
+    if (!article || !article.attributes) {
+      console.warn('Invalid article structure:', article);
+      return null;
+    }
+    
+    const attrs = article.attributes;
+    
+    // 确保必需字段存在
+    if (!attrs.title || !attrs.slug) {
+      console.warn('Article missing required fields:', attrs);
+      return null;
+    }
+    
+    return {
+      title: attrs.title || 'Untitled',
+      slug: attrs.slug || 'untitled',
+      description: attrs.description || '',
+      cover: attrs.cover || null,
+      author: attrs.author || null,
+      category: attrs.category || null,
+      blocks: attrs.blocks || null,
+      createdAt: attrs.createdAt || new Date().toISOString(),
+      updatedAt: attrs.updatedAt || new Date().toISOString(),
+      publishedAt: attrs.publishedAt || new Date().toISOString(),
+    } as Article;
   } catch (error) {
     console.error('Error fetching article:', error);
     return null;

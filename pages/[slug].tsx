@@ -124,7 +124,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       props: {
         pageData,
       },
-      revalidate: 3600, // 1小时重新生成
     };
   } catch (error) {
     console.error('Error fetching page:', error);

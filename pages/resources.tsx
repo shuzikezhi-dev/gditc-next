@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import Head from 'next/head'
-import { GetServerSideProps } from 'next'
+import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
-import { getResources, type Resource as StrapiResource } from '../lib/strapi'
+import { getResources, Resource as StrapiResource } from '../lib/strapi'
 
 // 扩展Resource类型，添加id字段
 interface Resource extends StrapiResource {
@@ -200,25 +200,20 @@ export default function Resources({ resources = mockResources }: { resources?: R
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     const resources = await getResources()
-    // 将Strapi资源转换为带有id的Resource类型
-    const resourcesWithId: Resource[] = resources.map((resource, index) => ({
-      ...resource,
-      id: index + 1 // 临时ID，实际应该从Strapi获取
-    }))
-    
-    return { 
-      props: { 
-        resources: resourcesWithId.length > 0 ? resourcesWithId : mockResources 
-      } 
+    return {
+      props: {
+        resources: resources || []
+      }
     }
   } catch (error) {
-    return { 
-      props: { 
-        resources: mockResources 
-      } 
+    console.error('Error fetching resources:', error)
+    return {
+      props: {
+        resources: []
+      }
     }
   }
 } 

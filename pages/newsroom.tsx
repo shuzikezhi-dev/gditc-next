@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { GetServerSideProps } from 'next'
+import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
-import { getNewsroom, type Article } from '../lib/strapi'
+import { getNewsroom, Article } from '../lib/strapi'
 
 interface NewsItem {
   id: number
@@ -51,7 +51,7 @@ const mockNews: NewsItem[] = [
   }
 ]
 
-export default function Newsroom({ news = mockNews }: { news?: NewsItem[] }) {
+export default function Newsroom({ articles = mockNews }: { articles?: NewsItem[] }) {
   const [filter, setFilter] = useState('all')
 
   const newsTypes = [
@@ -61,7 +61,7 @@ export default function Newsroom({ news = mockNews }: { news?: NewsItem[] }) {
     { id: 'newsletter', name: 'Newsletter', icon: '📧' }
   ]
 
-  const filteredNews = news?.filter(item => 
+  const filteredNews = articles?.filter(item => 
     filter === 'all' || item.type === filter
   ) || []
 
@@ -188,28 +188,20 @@ export default function Newsroom({ news = mockNews }: { news?: NewsItem[] }) {
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
-    const news = await getNewsroom()
-    // 将Strapi文章转换为NewsItem类型
-    const newsItems: NewsItem[] = news.map((article, index) => ({
-      id: index + 1,
-      title: article.title,
-      content: article.description || '',
-      publishedAt: article.publishedAt,
-      type: 'press' as const // 默认类型，可以根据article的category调整
-    }))
-    
-    return { 
-      props: { 
-        news: newsItems.length > 0 ? newsItems : mockNews 
-      } 
+    const articles = await getNewsroom()
+    return {
+      props: {
+        articles: articles || []
+      }
     }
   } catch (error) {
-    return { 
-      props: { 
-        news: mockNews 
-      } 
+    console.error('Error fetching newsroom data:', error)
+    return {
+      props: {
+        articles: []
+      }
     }
   }
 } 

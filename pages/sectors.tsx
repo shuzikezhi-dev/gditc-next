@@ -3,7 +3,7 @@ import Head from 'next/head'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getSectors, Sector } from '../lib/strapi'
-import { GetServerSideProps } from 'next'
+import { GetStaticProps } from 'next'
 
 interface SectorsPageProps {
   sectors: Sector[]
@@ -227,19 +227,12 @@ export default function Sectors({ sectors, currentType, currentLanguage: initial
   )
 }
 
-// 使用getServerSideProps实现服务端渲染，对SEO更友好
-export const getServerSideProps: GetServerSideProps<SectorsPageProps> = async (context) => {
+export const getStaticProps: GetStaticProps<SectorsPageProps> = async () => {
   try {
-    // 从查询参数获取类型和语言
-    const type = (context.query.type as string) || 'Network'
-    const language = (context.query.lang as string) || 'en'
+    const type = 'Network'
+    const language = 'en'
     
-    console.log(`SSR: Fetching sectors for type: ${type}, language: ${language}`)
-    
-    // 在服务端获取数据
     const sectors = await getSectors(type, language)
-    
-    console.log(`SSR: Fetched ${sectors?.length || 0} sectors`)
     
     return {
       props: {
@@ -249,7 +242,7 @@ export const getServerSideProps: GetServerSideProps<SectorsPageProps> = async (c
       }
     }
   } catch (error) {
-    console.error('SSR: Error fetching sectors:', error)
+    console.error('Error fetching sectors:', error)
     
     return {
       props: {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 import Layout from '../components/Layout';
 import SEOHead from '../components/SEOHead';
 import AnimatedNumber from '../components/AnimatedNumber';
@@ -258,7 +258,7 @@ export default function Home({ pageData, articles }: HomeProps) {
   );
 }
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetStaticProps = async () => {
   try {
     const [pageData, articles] = await Promise.all([
       getPageContent('home'),
@@ -272,7 +272,7 @@ export const getServerSideProps: GetServerSideProps = async () => {
       },
     };
   } catch (error) {
-    console.error('Error in getServerSideProps:', error);
+    console.error('Error in getStaticProps:', error);
     return {
       props: {
         pageData: null,

@@ -31,7 +31,7 @@ export default function NewsPage({ articles }: NewsPageProps) {
               <article key={index} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="p-6">
                   <div className="flex items-center text-sm text-gray-500 mb-3">
-                    {article.category && (
+                    {article.category && article.category.data && (
                       <span className="bg-primary-100 text-primary-800 px-2 py-1 rounded-full text-xs font-medium mr-3">
                         {article.category.data.attributes.name}
                       </span>
@@ -87,17 +87,16 @@ export const getStaticProps: GetStaticProps = async () => {
 
     return {
       props: {
-        articles,
+        articles: articles || [], // 确保 articles 永远不是 undefined
       },
-      revalidate: 3600, // 1小时重新生成
     };
   } catch (error) {
     console.error('Error fetching articles:', error);
+    // 即使出错也要返回有效的 props
     return {
       props: {
         articles: [],
       },
-      revalidate: 3600,
     };
   }
 }; 
