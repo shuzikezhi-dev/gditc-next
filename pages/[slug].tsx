@@ -72,10 +72,40 @@ export default function DynamicPage({ pageData }: PageProps) {
   );
 }
 
+export const getStaticPaths: GetStaticPaths = async () => {
+  try {
+    const pages = await getAllPages();
+    
+    const paths = pages.map((page) => ({
+      params: { slug: page.slug },
+    }));
+
+    return {
+      paths,
+      fallback: 'blocking', // 如果路径不存在，动态生成
+    };
+  } catch (error) {
+    console.error('Error fetching pages for static paths:', error);
+    // 返回空路径，让所有路径通过 fallback 处理
+    return {
+      paths: [],
+      fallback: 'blocking',
+    };
+  }
+};
+
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = params?.slug as string;
   
   if (!slug) {
+    return {
+      notFound: true,
+    };
+  }
+
+  // 如果是静态页面路径，返回 notFound 让静态页面处理
+  const staticRoutes = ['about', 'join-us', 'activities-services', 'sectors', 'events', 'resources', 'news', 'newsroom'];
+  if (staticRoutes.includes(slug)) {
     return {
       notFound: true,
     };
@@ -100,27 +130,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     console.error('Error fetching page:', error);
     return {
       notFound: true,
-    };
-  }
-};
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  try {
-    const pages = await getAllPages();
-    
-    const paths = pages.map((page) => ({
-      params: { slug: page.slug },
-    }));
-
-    return {
-      paths,
-      fallback: 'blocking',
-    };
-  } catch (error) {
-    console.error('Error fetching pages for static paths:', error);
-    return {
-      paths: [],
-      fallback: 'blocking',
     };
   }
 }; 

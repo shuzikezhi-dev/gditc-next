@@ -36,8 +36,8 @@ export default function NewsPage({ articles }: NewsPageProps) {
                         {article.category.data.attributes.name}
                       </span>
                     )}
-                    <time dateTime={article.published_at}>
-                      {new Date(article.published_at).toLocaleDateString('zh-CN')}
+                    <time dateTime={article.publishedAt}>
+                      {new Date(article.publishedAt).toLocaleDateString('zh-CN')}
                     </time>
                   </div>
                   
@@ -50,9 +50,9 @@ export default function NewsPage({ articles }: NewsPageProps) {
                     </a>
                   </h2>
                   
-                  {article.excerpt && (
+                  {article.description && (
                     <p className="text-gray-600 mb-4 line-clamp-3">
-                      {article.excerpt}
+                      {article.description}
                     </p>
                   )}
                   

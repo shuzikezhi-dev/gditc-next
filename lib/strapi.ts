@@ -80,7 +80,7 @@ export interface Article {
         alternativeText?: string;
       };
     };
-  };
+  } | null;
   author?: {
     data: {
       attributes: {
@@ -88,7 +88,7 @@ export interface Article {
         email: string;
       };
     };
-  };
+  } | null;
   category?: {
     data: {
       attributes: {
@@ -96,8 +96,8 @@ export interface Article {
         slug: string;
       };
     };
-  };
-  blocks?: any[];
+  } | null;
+  blocks?: any[] | null;
   createdAt: string;
   updatedAt: string;
   publishedAt: string;
@@ -202,20 +202,40 @@ export const getPageContent = async (slug: string): Promise<Page | null> => {
 // 获取所有页面（用于静态路径生成）
 export const getAllPages = async (): Promise<{ slug: string }[]> => {
   try {
+    // 先尝试从 articles 获取页面数据，因为 pages 端点可能不存在
     const response = await strapiAPI.get<StrapiResponse<{ slug: string }>>(
-      '/pages?fields[0]=slug'
+      '/articles?fields[0]=slug'
     );
     
-    return response.data.data.map((page: { attributes: { slug: string } }) => ({
-      slug: page.attributes.slug,
-    }));
+    // 安全地处理响应数据
+    if (!response.data.data || !Array.isArray(response.data.data)) {
+      console.warn('Invalid articles data structure for pages:', response.data);
+      return [];
+    }
+    
+    // 过滤掉与静态页面冲突的路径
+    const staticRoutes = ['about', 'join-us', 'activities-services', 'sectors', 'events', 'resources', 'news', 'newsroom'];
+    
+    return response.data.data
+      .map((page: { attributes: { slug: string } }) => {
+        // 确保 attributes 和 slug 存在
+        if (!page.attributes || !page.attributes.slug) {
+          return null;
+        }
+        return { slug: page.attributes.slug };
+      })
+      .filter((page): page is { slug: string } => 
+        page !== null && 
+        !staticRoutes.includes(page.slug) // 排除与静态路由冲突的路径
+      );
   } catch (error) {
     console.error('Error fetching all pages:', error);
+    // 如果 API 失败，返回空数组而不是固定路由（避免冲突）
     return [];
   }
 };
 
-// 获取文章列表
+// 获取文章列表 - 修复序列化问题
 export const getArticles = async (limit?: number): Promise<Article[]> => {
   try {
     const queryParams = limit 
@@ -225,7 +245,22 @@ export const getArticles = async (limit?: number): Promise<Article[]> => {
       `/articles${queryParams}`
     );
     
-    return response.data.data.map((article: { attributes: Article }) => article.attributes);
+    return response.data.data.map((article: { attributes: Article }) => {
+      const attrs = article.attributes;
+      // 确保所有必需字段都有值，避免 undefined 序列化错误
+      return {
+        title: attrs.title || '',
+        slug: attrs.slug || '',
+        description: attrs.description || '',
+        cover: attrs.cover ?? null,
+        author: attrs.author ?? null, 
+        category: attrs.category ?? null,
+        blocks: attrs.blocks ?? null,
+        createdAt: attrs.createdAt || new Date().toISOString(),
+        updatedAt: attrs.updatedAt || new Date().toISOString(),
+        publishedAt: attrs.publishedAt || new Date().toISOString(),
+      };
+    });
   } catch (error) {
     console.error('Error fetching articles:', error);
     return [];
