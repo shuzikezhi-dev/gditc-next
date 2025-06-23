@@ -172,7 +172,7 @@ export default function Newsroom({ articles = mockNews }: { articles?: NewsItem[
                     {item.content}
                   </p>
                   
-                  <a href="#" className="inline-flex items-center text-primary hover:text-primary/80 font-medium">
+                  <a href={`/newsroom/${item.id}`} className="inline-flex items-center text-primary hover:text-primary/80 font-medium">
                     Read More
                     <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

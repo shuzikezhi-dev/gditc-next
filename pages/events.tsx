@@ -253,7 +253,7 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
 
                     <div className="flex items-center justify-between">
                       <a
-                        href="#"
+                        href={`/events/${event.id}`}
                         className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
                       >
                         {new Date(event.date) > new Date() ? 'Register' : 'View Details'}

@@ -43,7 +43,7 @@ export default function NewsPage({ articles }: NewsPageProps) {
                   
                   <h2 className="text-xl font-semibold mb-3">
                     <a 
-                      href={`/news/${article.slug}`}
+                      href={`/articles/${article.slug || `article-${index}`}`}
                       className="hover:text-primary-600 transition-colors"
                     >
                       {article.title}
@@ -57,7 +57,7 @@ export default function NewsPage({ articles }: NewsPageProps) {
                   )}
                   
                   <a
-                    href={`/news/${article.slug}`}
+                    href={`/articles/${article.slug || `article-${index}`}`}
                     className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
                   >
                     阅读更多

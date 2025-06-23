@@ -162,7 +162,7 @@ export default function JoinUs() {
                     </p>
                     <ul className="text-sm text-body-color dark:text-dark-6 space-y-2">
                       {step.items.map((item, itemIndex) => (
-                        <li key={itemIndex} className="flex items-start justify-center">
+                        <li key={itemIndex} className="flex items-start justify-start">
                           <svg className="w-4 h-4 text-primary mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
@@ -244,7 +244,7 @@ export default function JoinUs() {
         </section>
 
         {/* Application Form */}
-        <section className="bg-gray-1 pb-8 pt-20 dark:bg-dark-2 lg:pb-[70px] lg:pt-[120px]">
+        {/* <section className="bg-gray-1 pb-8 pt-20 dark:bg-dark-2 lg:pb-[70px] lg:pt-[120px]">
           <div className="container px-4 mx-auto">
             <div className="flex flex-wrap items-center -mx-4">
               <div className="w-full px-4 lg:w-1/2">
@@ -389,7 +389,7 @@ export default function JoinUs() {
               </div>
             </div>
           </div>
-        </section>
+        </section> */}
       </Layout>
     </>
   )

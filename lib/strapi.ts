@@ -10,8 +10,18 @@ const strapiAPI = axios.create({
 // 添加请求拦截器来处理认证
 strapiAPI.interceptors.request.use((config) => {
   const token = process.env.STRAPI_API_TOKEN;
-  if (token && token !== 'your_readonly_token_here') {
+  console.log('🔑 API Token check:', {
+    hasToken: !!token,
+    tokenLength: token?.length || 0,
+    tokenPreview: token ? `${token.substring(0, 10)}...` : 'null',
+    isDefaultToken: token === 'your_readonly_token_here' || token === 'your_api_token_here'
+  });
+  
+  if (token && token !== 'your_readonly_token_here' && token !== 'your_api_token_here') {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('✅ Authorization header added');
+  } else {
+    console.warn('⚠️ No valid API token found or using default placeholder');
   }
   return config;
 });
@@ -185,7 +195,7 @@ export interface Global {
 export const getPageContent = async (slug: string): Promise<Page | null> => {
   try {
     const response = await strapiAPI.get<StrapiResponse<Page>>(
-      `/pages?filters[slug][$eq]=${slug}&populate=*`
+      `/pages?filters[slug][$eq]=${slug}`
     );
     
     if (response.data.data.length === 0) {
@@ -239,8 +249,8 @@ export const getAllPages = async (): Promise<{ slug: string }[]> => {
 export const getArticles = async (limit?: number): Promise<Article[]> => {
   try {
     const queryParams = limit 
-      ? `?pagination[limit]=${limit}&populate=*&sort=publishedAt:desc` 
-      : '?populate=*&sort=publishedAt:desc';
+      ? `?pagination[limit]=${limit}&sort=publishedAt:desc`
+      : '?sort=publishedAt:desc';
     const response = await strapiAPI.get<StrapiResponse<Article>>(
       `/articles${queryParams}`
     );
@@ -314,7 +324,7 @@ export const getArticles = async (limit?: number): Promise<Article[]> => {
 export const getArticleBySlug = async (slug: string): Promise<Article | null> => {
   try {
     const response = await strapiAPI.get<StrapiResponse<Article>>(
-      `/articles?filters[slug][$eq]=${slug}&populate=*`
+      `/articles?filters[slug][$eq]=${slug}`
     );
     
     if (!response.data.data || response.data.data.length === 0) {
@@ -372,18 +382,11 @@ export const getAllArticles = async (): Promise<{ slug: string }[]> => {
 // 获取板块信息
 export const getSectors = async (type?: string, locale: string = 'en'): Promise<Sector[]> => {
   try {
-    // 简化查询参数，减少过度筛选
+    // 只保留语言筛选，去掉populate参数
     const params = new URLSearchParams();
-    params.append('populate', '*');
-    params.append('sort', 'date:desc');
     
-    // 暂时不使用locale筛选，因为可能导致数据过滤过度
-    // params.append('locale', locale);
-    
-    // 暂时不使用type筛选，在前端进行筛选
-    // if (type) {
-    //   params.append('filters[type][$eq]', type);
-    // }
+    // 添加locale筛选
+    params.append('locale', locale);
     
     const queryString = params.toString();
     console.log('Fetching sectors with URL:', `${strapiAPI.defaults.baseURL}/sectors?${queryString}`);
@@ -408,23 +411,30 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
       if (sector.attributes) {
         return {
           ...sector.attributes,
-          id: sector.id
+          id: sector.id,
+          // 确保所有可能为undefined的字段都设为null
+          attach: sector.attributes.attach || null,
+          cover: sector.attributes.cover || null,
+          author: sector.attributes.author || null
         };
       } else {
         // 直接使用sector对象（当前API返回的格式）
         return {
           id: sector.id,
-          title: sector.title,
-          date: sector.date,
-          content: sector.content,
-          source: sector.source,
-          descript: sector.descript,
-          artcileId: sector.artcileId,
-          type: sector.type,
-          attach: sector.attach,
-          createdAt: sector.createdAt,
-          updatedAt: sector.updatedAt,
-          publishedAt: sector.publishedAt
+          title: sector.title || '',
+          date: sector.date || null,
+          content: sector.content || '',
+          source: sector.source || null,
+          descript: sector.descript || '',
+          artcileId: sector.artcileId || null,
+          type: sector.type || 'Network',
+          // 确保所有可能为undefined的字段都设为null
+          attach: sector.attach || null,
+          cover: sector.cover || null,
+          author: sector.author || null,
+          createdAt: sector.createdAt || null,
+          updatedAt: sector.updatedAt || null,
+          publishedAt: sector.publishedAt || null
         };
       }
     });
@@ -444,7 +454,58 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
       url: error.config?.url
     });
     
-    // 如果是认证错误，返回空数组而不是假数据
+    // 如果是403错误且使用了locale参数，尝试不使用locale重新请求
+    if (error.response?.status === 403 && locale !== 'fallback') {
+      console.warn('🔒 403 error with locale, trying without locale parameter...');
+      try {
+        const fallbackResponse = await strapiAPI.get('/sectors');
+        
+        if (fallbackResponse.data.data && Array.isArray(fallbackResponse.data.data)) {
+          let sectors = fallbackResponse.data.data.map((sector: any) => {
+            if (sector.attributes) {
+              return { 
+                ...sector.attributes, 
+                id: sector.id,
+                // 确保所有可能为undefined的字段都设为null
+                attach: sector.attributes.attach || null,
+                cover: sector.attributes.cover || null,
+                author: sector.attributes.author || null
+              };
+            } else {
+              return {
+                id: sector.id,
+                title: sector.title || '',
+                date: sector.date || null,
+                content: sector.content || '',
+                source: sector.source || null,
+                descript: sector.descript || '',
+                artcileId: sector.artcileId || null,
+                type: sector.type || 'Network',
+                // 确保所有可能为undefined的字段都设为null
+                attach: sector.attach || null,
+                cover: sector.cover || null,
+                author: sector.author || null,
+                createdAt: sector.createdAt || null,
+                updatedAt: sector.updatedAt || null,
+                publishedAt: sector.publishedAt || null
+              };
+            }
+          });
+          
+          // 在前端进行类型筛选
+          if (type) {
+            sectors = sectors.filter((sector: Sector) => sector.type === type);
+          }
+          
+          console.log('Fallback request successful, got', sectors.length, 'sectors');
+          return sectors;
+        }
+      } catch (fallbackError) {
+        console.error('Fallback request also failed:', fallbackError);
+      }
+    }
+    
+    // 如果是认证错误，返回空数组
     if (error.response?.status === 401 || error.response?.status === 403) {
       console.warn('🔒 Authentication error. Please check your API token.');
       return [];
@@ -458,8 +519,8 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
 export const getEvents = async (limit?: number): Promise<Event[]> => {
   try {
     const queryParams = limit 
-      ? `?pagination[limit]=${limit}&populate=*&sort=date:desc`
-      : '?populate=*&sort=date:desc';
+      ? `?pagination[limit]=${limit}&sort=date:desc`
+      : '?sort=date:desc';
     const response = await strapiAPI.get<StrapiResponse<Event>>(
       `/events${queryParams}`
     );
@@ -475,8 +536,8 @@ export const getEvents = async (limit?: number): Promise<Event[]> => {
 export const getResources = async (type?: string): Promise<Resource[]> => {
   try {
     const queryParams = type 
-      ? `?filters[type][$eq]=${type}&populate=*`
-      : '?populate=*';
+      ? `?filters[type][$eq]=${type}`
+      : '';
     const response = await strapiAPI.get<StrapiResponse<Resource>>(
       `/resources${queryParams}`
     );
@@ -492,7 +553,7 @@ export const getResources = async (type?: string): Promise<Resource[]> => {
 export const getAbout = async (): Promise<About | null> => {
   try {
     const response = await strapiAPI.get<StrapiSingleResponse<About>>(
-      '/about?populate=*'
+      '/about'
     );
     
     return response.data.data.attributes;
@@ -506,7 +567,7 @@ export const getAbout = async (): Promise<About | null> => {
 export const getGlobal = async (): Promise<Global | null> => {
   try {
     const response = await strapiAPI.get<StrapiSingleResponse<Global>>(
-      '/global?populate=*'
+      '/global'
     );
     
     return response.data.data.attributes;
@@ -520,8 +581,8 @@ export const getGlobal = async (): Promise<Global | null> => {
 export const getNewsroom = async (limit?: number): Promise<Article[]> => {
   try {
     const queryParams = limit 
-      ? `?pagination[limit]=${limit}&populate=*&sort=publishedAt:desc`
-      : '?populate=*&sort=publishedAt:desc';
+      ? `?pagination[limit]=${limit}&sort=publishedAt:desc`
+      : '?sort=publishedAt:desc';
     const response = await strapiAPI.get<StrapiResponse<Article>>(
       `/newsroom${queryParams}`
     );
@@ -530,6 +591,38 @@ export const getNewsroom = async (limit?: number): Promise<Article[]> => {
   } catch (error) {
     console.error('Error fetching newsroom:', error);
     return [];
+  }
+};
+
+// 获取单个sector by artcileId
+export const getSectorById = async (artcileId: string): Promise<Sector | null> => {
+  try {
+    // 先尝试获取所有sectors，然后在客户端筛选
+    const allSectors = await getSectors();
+    const sector = allSectors.find(s => s.artcileId === artcileId);
+    
+    console.log('Finding sector by artcileId:', artcileId, 'Found:', !!sector);
+    
+    return sector || null;
+  } catch (error: any) {
+    console.error('Error fetching sector by ID:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    
+    return null;
+  }
+};
+
+// 根据articleId和语言获取对应的sector
+export const getSectorByArticleIdAndLanguage = async (artcileId: string, language: string): Promise<Sector | null> => {
+  try {
+    const sectors = await getSectors(undefined, language);
+    return sectors.find(sector => sector.artcileId === artcileId) || null;
+  } catch (error) {
+    console.error('Error fetching sector by articleId and language:', error);
+    return null;
   }
 };
 

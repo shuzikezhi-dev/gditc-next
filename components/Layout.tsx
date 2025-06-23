@@ -22,13 +22,13 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
     { href: '/activities-services', label: 'Activities & Services' },
     { href: '/events', label: 'Events' },
     { href: '/resources', label: 'Resources' },
-  ];
-
-  // 下拉菜单项
-  const pagesItems = [
+    { href: '/news', label: 'News' },
     { href: '/newsroom', label: 'Newsroom' },
     { href: '/join-us', label: 'Join Us' },
   ];
+
+  // 下拉菜单项 - 现在为空
+  const pagesItems: { href: string; label: string }[] = [];
 
   // 社交媒体链接
   const socialLinks = [
@@ -53,6 +53,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
       <LanguageSwitcher 
         currentLanguage={currentLanguage} 
         onLanguageChange={onLanguageChange}
+        isDarkMode={isDarkMode}
+        onToggleDarkMode={toggleDarkMode}
       />
       
       {/* 主导航栏 */}
@@ -85,47 +87,32 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                 </Link>
               ))}
               
-              {/* Pages 下拉菜单 */}
-              <div className="relative group">
-                <button className="flex items-center text-primary font-medium">
-                  Pages
-                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                <div className="absolute top-full left-0 hidden w-48 bg-white rounded-lg shadow-lg dark:bg-dark-2 group-hover:block">
-                  {pagesItems.map((item) => (
-                    <Link 
-                      key={item.href}
-                      href={item.href}
-                      className="block px-4 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+              {/* Pages 下拉菜单 - 隐藏因为没有项目 */}
+              {pagesItems.length > 0 && (
+                <div className="relative group">
+                  <button className="flex items-center text-primary font-medium">
+                    Pages
+                    <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <div className="absolute top-full left-0 hidden w-48 bg-white rounded-lg shadow-lg dark:bg-dark-2 group-hover:block">
+                    {pagesItems.map((item) => (
+                      <Link 
+                        key={item.href}
+                        href={item.href}
+                        className="block px-4 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* 右侧控制按钮 */}
             <div className="flex items-center space-x-4">
-              {/* 主题切换按钮 */}
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-                aria-label="Toggle theme"
-              >
-                {isDarkMode ? (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 6.89999C9.18752 6.89999 6.90002 9.18749 6.90002 12C6.90002 14.8125 9.18752 17.1 12 17.1C14.8125 17.1 17.1 14.8125 17.1 12C17.1 9.18749 14.8125 6.89999 12 6.89999ZM12 15.4125C10.125 15.4125 8.58752 13.875 8.58752 12C8.58752 10.125 10.125 8.58749 12 8.58749C13.875 8.58749 15.4125 10.125 15.4125 12C15.4125 13.875 13.875 15.4125 12 15.4125Z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M13.3125 1.50001C12.675 1.31251 12.0375 1.16251 11.3625 1.05001C10.875 0.975006 10.35 1.23751 10.1625 1.68751C9.93751 2.13751 10.05 2.70001 10.425 3.00001C13.0875 5.47501 14.0625 9.11251 12.975 12.525C11.775 16.3125 8.25001 18.975 4.16251 19.0875C3.63751 19.0875 3.22501 19.425 3.07501 19.9125C2.92501 20.4 3.15001 20.925 3.56251 21.1875C4.50001 21.75 5.43751 22.2 6.37501 22.5C7.46251 22.8375 8.58751 22.9875 9.71251 22.9875C11.625 22.9875 13.5 22.5 15.1875 21.5625C17.85 20.1 19.725 17.7375 20.55 14.8875C22.1625 9.26251 18.975 3.37501 13.3125 1.50001Z" />
-                  </svg>
-                )}
-              </button>
-
               {/* 移动端菜单按钮 */}
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -152,18 +139,20 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                   {item.label}
                 </Link>
               ))}
-              <div className="border-t pt-2 mt-2">
-                {pagesItems.map((item) => (
-                  <Link 
-                    key={item.href}
-                    href={item.href}
-                    className="block py-2 text-gray-700 hover:text-primary dark:text-gray-300"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
+              {pagesItems.length > 0 && (
+                <div className="border-t pt-2 mt-2">
+                  {pagesItems.map((item) => (
+                    <Link 
+                      key={item.href}
+                      href={item.href}
+                      className="block py-2 text-gray-700 hover:text-primary dark:text-gray-300"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </nav>
@@ -181,8 +170,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
           <div className="flex flex-wrap -mx-4 mb-8">
             <div className="w-full px-4">
               <Link href="/" className="mb-6 inline-flex items-center space-x-3">
-                <img src="/logo.png" alt="DITC logo" className="h-12 w-auto" />
-                <span className="text-2xl font-bold text-white">DITC</span>
+                <img src="/logo_dark.png" alt="DITC logo" className="h-12 w-auto" />
+                <span className="text-2xl font-bold text-white">DIGITAL INFRASTRUCTURE TECHNICAL COUNCIL</span>
               </Link>
             </div>
           </div>
@@ -213,8 +202,8 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                   </a>
                 </div>
 
-                {/* Newsletter Section */}
-                <div className="mt-8">
+                {/* Newsletter Section - Hidden */}
+                <div className="mt-8 hidden">
                   <h3 className="text-lg font-semibold text-white mb-6">Stay Updated</h3>
                   <form className="newsletter-form mb-4">
                     <div className="relative">
@@ -320,7 +309,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                         </svg>
                         60 Paya Lebar Road<br/>#12-03, Paya Lebar Square<br/>Singapore 409051
                       </p>
-                      <p className="mb-4 text-base text-white flex items-center">
+                      <p className="mb-4 text-base text-white flex items-center hidden">
                         <svg width="16" height="16" className="mr-3 fill-current text-primary" viewBox="0 0 24 24">
                           <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/>
                         </svg>
@@ -341,11 +330,11 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
         </div>
 
         {/* Bottom Bar */}
-        <div className="footer-bottom mt-12 border-t border-[#8890A4]/40 py-8 lg:mt-[60px]">
+        {/* <div className="footer-bottom mt-12 border-t border-[#8890A4]/40 py-8 lg:mt-[60px]">
           <div className="container mx-auto px-4">
             <div className="flex flex-wrap items-center justify-between -mx-4">
               <div className="w-full px-4 md:w-2/3 lg:w-auto flex-grow">
-                <div className="legal-links flex items-center justify-center md:justify-start">
+                <div className="legal-links flex items-center justify-center md:justify-start hidden">
                   <a href="#" className="px-3 text-base text-white hover:text-primary hover:underline">
                     Privacy Policy
                   </a>
@@ -366,12 +355,11 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
 
               <div className="w-full px-4 md:w-1/3 lg:w-auto">
                 <div className="badges flex justify-center md:justify-end items-center">
-                  {/* ISO Badge removed */}
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Copyright & Company Registration Info */}
         <div className="border-t border-[#8890A4]/40 py-6">

@@ -413,9 +413,13 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
               </div>
 
               <div className="text-center mt-8">
-                <a href="#" className="inline-flex items-center px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors">
+                <a 
+                  href="/DITC-CM-001：DITC Membership System and Fee Standards.pdf" 
+                  download="DITC-Active-Standards-Projects.pdf"
+                  className="inline-flex items-center px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
+                >
                   <svg className="w-5 h-5 mr-2" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 9l-7 7-7-7"/>
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z M12,11L16,15H13.5V19H10.5V15H8L12,11Z"/>
                   </svg>
                   View Our Active Standards Projects
                 </a>
@@ -472,7 +476,7 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
 
               <div className="mt-12 text-center">
                 <p className="text-lg text-body-color dark:text-dark-6 italic">
-                  This framework ensures DITC remains a trusted authority in digital infrastructure while fostering innovation and interoperability worldwide.
+                  
                 </p>
               </div>
             </div>
