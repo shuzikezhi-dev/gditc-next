@@ -2,7 +2,7 @@
 const nextConfig = {
   output: 'export',
   trailingSlash: true,
-  distDir: 'out',
+  distDir: 'dist',
   images: {
     unoptimized: true,
     domains: ['wonderful-serenity-47deffe3a2.strapiapp.com']
