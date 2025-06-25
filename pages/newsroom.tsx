@@ -111,7 +111,7 @@ export default function Newsroom() {
                     {getText('description')}
                   </p>
 
-                  <ul className="flex items-center justify-center gap-[10px] flex-wrap">
+                  {/* <ul className="flex items-center justify-center gap-[10px] flex-wrap">
                     <li>
                       <button
                         onClick={() => setFilter('all')}
@@ -167,7 +167,7 @@ export default function Newsroom() {
                         {getText('insights')}
                       </button>
                     </li>
-                  </ul>
+                  </ul> */}
 
                   {/* 加载状态指示器 */}
                   {loading && (

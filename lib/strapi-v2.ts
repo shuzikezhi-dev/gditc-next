@@ -88,6 +88,25 @@ export interface DetailContent {
 export class DetailPageService {
   
   /**
+   * 内容类型映射 - 将前端使用的类型名映射到 Strapi API 端点
+   */
+  static getApiEndpoint(contentType: string): string {
+    const typeMapping: { [key: string]: string } = {
+      'newsroom': 'newsrooms',
+      'article': 'articles',
+      'articles': 'articles',
+      'sector': 'sectors',
+      'sectors': 'sectors',
+      'event': 'events',
+      'events': 'events',
+      'resource': 'resources',
+      'resources': 'resources'
+    };
+    
+    return typeMapping[contentType] || contentType;
+  }
+  
+  /**
    * 方案1: 使用documentId直接获取详情（推荐）
    * URL: /api/{contentType}/{documentId}?locale={locale}&populate=*
    */
@@ -97,10 +116,11 @@ export class DetailPageService {
     locale: string = 'en'
   ): Promise<DetailContent | null> {
     try {
-      console.log(`🔍 [方案1] 尝试获取详情: ${contentType}/${documentId} (${locale})`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🔍 [方案1] 尝试获取详情: ${contentType} -> ${apiEndpoint}/${documentId} (${locale})`);
       
       const response = await strapiAPI.get(
-        `/${contentType}/${documentId}?locale=${locale}&populate=*`
+        `/${apiEndpoint}/${documentId}?locale=${locale}&populate=*`
       );
       
       if (response.data?.data) {
@@ -126,10 +146,11 @@ export class DetailPageService {
     locale: string = 'en'
   ): Promise<DetailContent | null> {
     try {
-      console.log(`🔍 [方案2] 尝试获取详情: ${contentType}/${id} (${locale})`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🔍 [方案2] 尝试获取详情: ${contentType} -> ${apiEndpoint}/${id} (${locale})`);
       
       const response = await strapiAPI.get(
-        `/${contentType}/${id}?locale=${locale}&populate=*`
+        `/${apiEndpoint}/${id}?locale=${locale}&populate=*`
       );
       
       if (response.data?.data) {
@@ -155,10 +176,11 @@ export class DetailPageService {
     locale: string = 'en'
   ): Promise<DetailContent | null> {
     try {
-      console.log(`🔍 [方案3] 尝试筛选获取详情: ${contentType} documentId=${documentId} (${locale})`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🔍 [方案3] 尝试筛选获取详情: ${contentType} -> ${apiEndpoint} documentId=${documentId} (${locale})`);
       
       const response = await strapiAPI.get(
-        `/${contentType}?filters[documentId][$eq]=${documentId}&locale=${locale}&populate=*`
+        `/${apiEndpoint}?filters[documentId][$eq]=${documentId}&locale=${locale}&populate=*`
       );
       
       if (response.data?.data && response.data.data.length > 0) {
@@ -184,10 +206,11 @@ export class DetailPageService {
     locale: string = 'en'
   ): Promise<DetailContent | null> {
     try {
-      console.log(`🔍 [方案4] 尝试用slug获取详情: ${contentType} slug=${slug} (${locale})`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🔍 [方案4] 尝试用slug获取详情: ${contentType} -> ${apiEndpoint} slug=${slug} (${locale})`);
       
       const response = await strapiAPI.get(
-        `/${contentType}?filters[slug][$eq]=${slug}&locale=${locale}&populate=*`
+        `/${apiEndpoint}?filters[slug][$eq]=${slug}&locale=${locale}&populate=*`
       );
       
       if (response.data?.data && response.data.data.length > 0) {
@@ -213,10 +236,11 @@ export class DetailPageService {
     locale: string = 'en'
   ): Promise<DetailContent | null> {
     try {
-      console.log(`🔍 [方案5] 尝试用artcileId获取详情: ${contentType} artcileId=${artcileId} (${locale})`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🔍 [方案5] 尝试用artcileId获取详情: ${contentType} -> ${apiEndpoint} artcileId=${artcileId} (${locale})`);
       
       const response = await strapiAPI.get(
-        `/${contentType}?filters[artcileId][$eq]=${artcileId}&locale=${locale}&populate=*`
+        `/${apiEndpoint}?filters[artcileId][$eq]=${artcileId}&locale=${locale}&populate=*`
       );
       
       if (response.data?.data && response.data.data.length > 0) {
@@ -278,10 +302,11 @@ export class DetailPageService {
     documentId: string
   ): Promise<DetailContent[]> {
     try {
-      console.log(`🌐 获取所有语言版本: ${contentType}/${documentId}`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🌐 获取所有语言版本: ${contentType} -> ${apiEndpoint}/${documentId}`);
       
       const response = await strapiAPI.get(
-        `/${contentType}?filters[documentId][$eq]=${documentId}&populate=*&locale=all`
+        `/${apiEndpoint}?filters[documentId][$eq]=${documentId}&populate=*&locale=all`
       );
       
       if (response.data?.data) {
@@ -338,9 +363,10 @@ export const getContentList = async (
   limit?: number
 ): Promise<DetailContent[]> => {
   try {
-    console.log(`📋 获取${contentType}列表 (${locale})`);
+    const apiEndpoint = DetailPageService.getApiEndpoint(contentType);
+    console.log(`📋 获取${contentType}列表 -> ${apiEndpoint} (${locale})`);
     
-    let url = `/${contentType}?locale=${locale}&populate=*&sort=publishedAt:desc`;
+    let url = `/${apiEndpoint}?locale=${locale}&populate=*&sort=publishedAt:desc`;
     if (limit) {
       url += `&pagination[limit]=${limit}`;
     }

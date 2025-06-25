@@ -54,6 +54,25 @@ export interface DetailContent {
 export class DetailPageService {
   
   /**
+   * 内容类型映射 - 将前端使用的类型名映射到 Strapi API 端点
+   */
+  static getApiEndpoint(contentType: string): string {
+    const typeMapping: { [key: string]: string } = {
+      'newsroom': 'newsrooms',
+      'article': 'articles',
+      'articles': 'articles',
+      'sector': 'sectors',
+      'sectors': 'sectors',
+      'event': 'events',
+      'events': 'events',
+      'resource': 'resources',
+      'resources': 'resources'
+    };
+    
+    return typeMapping[contentType] || contentType;
+  }
+  
+  /**
    * 方案1: 使用documentId直接获取详情（推荐）
    */
   static async getByDocumentId(
@@ -62,10 +81,11 @@ export class DetailPageService {
     locale: string = 'en'
   ): Promise<DetailContent | null> {
     try {
-      console.log(`🔍 [方案1] 尝试获取详情: ${contentType}/${documentId} (${locale})`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🔍 [方案1] 尝试获取详情: ${contentType} -> ${apiEndpoint}/${documentId} (${locale})`);
       
       const response = await strapiAPI.get(
-        `/${contentType}/${documentId}?locale=${locale}&populate=*`
+        `/${apiEndpoint}/${documentId}?locale=${locale}&populate=*`
       );
       
       if (response.data?.data) {
@@ -90,10 +110,11 @@ export class DetailPageService {
     locale: string = 'en'
   ): Promise<DetailContent | null> {
     try {
-      console.log(`🔍 [方案2] 尝试筛选获取详情: ${contentType} documentId=${documentId} (${locale})`);
+      const apiEndpoint = this.getApiEndpoint(contentType);
+      console.log(`🔍 [方案2] 尝试筛选获取详情: ${contentType} -> ${apiEndpoint} documentId=${documentId} (${locale})`);
       
       const response = await strapiAPI.get(
-        `/${contentType}?filters[documentId][$eq]=${documentId}&locale=${locale}&populate=*`
+        `/${apiEndpoint}?filters[documentId][$eq]=${documentId}&locale=${locale}&populate=*`
       );
       
       if (response.data?.data && response.data.data.length > 0) {
@@ -155,9 +176,10 @@ export const getContentList = async (
   limit?: number
 ): Promise<DetailContent[]> => {
   try {
-    console.log(`📋 获取${contentType}列表 (${locale})`);
+    const apiEndpoint = DetailPageService.getApiEndpoint(contentType);
+    console.log(`📋 获取${contentType}列表 -> ${apiEndpoint} (${locale})`);
     
-    let url = `/${contentType}?locale=${locale}&populate=*&sort=publishedAt:desc`;
+    let url = `/${apiEndpoint}?locale=${locale}&populate=*&sort=publishedAt:desc`;
     if (limit) {
       url += `&pagination[limit]=${limit}`;
     }
