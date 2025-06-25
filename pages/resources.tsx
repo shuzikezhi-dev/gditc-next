@@ -228,25 +228,28 @@ export default function Resources() {
               {filteredResources.map((resource, index) => (
                 <div key={resource.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
                   <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
-                    <div className="mb-8 overflow-hidden rounded-[5px]">
-                      <a href={resource.downloadUrl} className="block">
-                        <img
-                          src={
-                            typeof resource.cover === 'object' && resource.cover 
-                              ? (resource.cover as any).url || '/images/blog/blog-01.jpg'
-                              : typeof resource.cover === 'string' 
-                                ? resource.cover 
-                                : '/images/blog/blog-01.jpg'
-                          }
-                          alt={
-                            typeof resource.cover === 'object' && resource.cover 
-                              ? (resource.cover as any).alternativeText || resource.title
-                              : resource.title
-                          }
-                          className="w-full transition group-hover:rotate-6 group-hover:scale-125"
-                        />
-                      </a>
-                    </div>
+                    {/* 只有当有有效封面时才显示图片 */}
+                    {resource.cover && (
+                      <div className="mb-8 overflow-hidden rounded-[5px]">
+                        <a href={resource.downloadUrl} className="block">
+                          <img
+                            src={
+                              typeof resource.cover === 'object' && resource.cover 
+                                ? (resource.cover as any).url
+                                : typeof resource.cover === 'string' 
+                                  ? resource.cover 
+                                  : undefined
+                            }
+                            alt={
+                              typeof resource.cover === 'object' && resource.cover 
+                                ? (resource.cover as any).alternativeText || resource.title
+                                : resource.title
+                            }
+                            className="w-full h-48 object-cover transition group-hover:rotate-6 group-hover:scale-125"
+                          />
+                        </a>
+                      </div>
+                    )}
                     <div>
                       <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
                         {formatDate(resource.publishDate)}

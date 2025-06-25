@@ -156,6 +156,19 @@ export const getStaticProps: GetStaticProps = async ({ locale = 'en' }) => {
   try {
     console.log('🔄 正在获取Activities & Services数据...');
     
+    // 检查是否在导出模式
+    const isExportMode = process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-export';
+    
+    if (isExportMode) {
+      console.log('📦 检测到导出模式，使用默认数据');
+      return {
+        props: {
+          activities: [],
+          locale: locale === 'zh-Hans' ? 'zh-Hans' : 'en'
+        }
+      };
+    }
+    
     // 获取activities-and-service数据
     const activitiesData = await getContentList('activities-and-services', locale === 'zh-Hans' ? 'zh-Hans' : 'en');
     
@@ -180,8 +193,7 @@ export const getStaticProps: GetStaticProps = async ({ locale = 'en' }) => {
       props: {
         activities,
         locale: locale === 'zh-Hans' ? 'zh-Hans' : 'en'
-      },
-      revalidate: 3600, // 1小时重新生成
+      }
     };
   } catch (error) {
     console.error('❌ 获取Activities & Services数据失败:', error);
@@ -190,8 +202,7 @@ export const getStaticProps: GetStaticProps = async ({ locale = 'en' }) => {
       props: {
         activities: [],
         locale: locale === 'zh-Hans' ? 'zh-Hans' : 'en'
-      },
-      revalidate: 60, // 出错时1分钟后重试
+      }
     };
   }
 }; 

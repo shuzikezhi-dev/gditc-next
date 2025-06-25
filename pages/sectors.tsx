@@ -174,7 +174,7 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
   return (
     <>
       <SEOHead
-        title={`${getActiveFilterDisplayName()} ${getText('title')} | DITC - Digital Infrastructure Technical Council`}
+        title={`${getActiveFilterDisplayName()} ${getText('title')}`}
         description={`DITC ${getActiveFilterDisplayName()} ${getText('description')}`}
       />
       <Layout>
@@ -249,7 +249,7 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
                           <img
                             src={sector.cover?.url || '/images/blog/blog-01.jpg'}
                             alt={sector.title}
-                            className="w-full transition group-hover:rotate-6 group-hover:scale-125"
+                            className="w-full h-48 object-cover transition group-hover:rotate-6 group-hover:scale-125"
                             onError={(e) => {
                               console.log('Image load error for sector:', sector.id, 'cover:', sector.cover);
                               console.log('Attempted URL:', sector.cover?.url);

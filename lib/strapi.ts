@@ -96,7 +96,8 @@ export interface Article {
   documentId?: string;
   title: string;
   slug: string;
-  description: string;
+  description?: string;
+  descript?: string;
   content?: string;
   cover?: {
     id?: number;
@@ -506,7 +507,8 @@ export const getArticles = async (limit?: number, locale: string = 'en'): Promis
           documentId: article.documentId,
           title: article.title,
           slug: article.slug,
-          description: article.description || '',
+          description: article.description,
+          descript: article.descript,
           cover: article.cover || null,
           author: article.author || null,
           category: article.category || null,
@@ -552,7 +554,8 @@ export const getArticleByDocumentId = async (documentId: string, locale: string 
       documentId: article.documentId,
       title: article.title,
       slug: article.slug || '',
-      description: article.description || '',
+      description: article.description,
+      descript: article.descript,
       cover: article.cover || null,
       author: article.author || null,
       category: article.category || null,
@@ -591,7 +594,8 @@ export const getArticleBySlug = async (slug: string): Promise<Article | null> =>
       documentId: article.documentId,
       title: article.title,
       slug: article.slug,
-      description: article.description || '',
+      description: article.description,
+      descript: article.descript,
       cover: article.cover || null,
       author: article.author || null,
       category: article.category || null,
@@ -635,6 +639,7 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
     // 如果指定了语言且不是默认语言，添加locale参数
     if (locale && locale !== 'en') {
       queryParams.append('locale', locale);
+      console.log(`🔄 使用 locale: ${locale}`);
     }
 
     console.log(`Fetching sectors with locale: ${locale}, type: ${type || 'all'}`);
@@ -746,6 +751,9 @@ export const getEvents = async (limit?: number, locale: string = 'en'): Promise<
     
     if (locale && locale !== 'en') {
       queryParams.append('locale', locale);
+      console.log(`🔄 使用 locale: ${locale}`);
+    } else {
+      console.log(`🔄 使用默认 locale: en`);
     }
     
     if (limit) {
@@ -757,6 +765,9 @@ export const getEvents = async (limit?: number, locale: string = 'en'): Promise<
     
     const url = `/events${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
+    console.log(`🌐 完整的 Events API URL: ${url}`);
+    console.log(`🔍 查询参数详情:`, Object.fromEntries(queryParams.entries()));
+    
     const response = await strapiAPI.get<StrapiResponse<Event>>(url);
     
     const events = response.data.data.map((event: any) => {
@@ -764,6 +775,7 @@ export const getEvents = async (limit?: number, locale: string = 'en'): Promise<
       console.log('Raw event data:', {
         id: event.id,
         title: event.title,
+        locale: event.locale,
         hasAttributes: !!event.attributes,
         cover: event.cover || event.attributes?.cover
       });
@@ -925,6 +937,7 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
     
     if (locale && locale !== 'en') {
       queryParams.append('locale', locale);
+      console.log(`🔄 使用 locale: ${locale}`);
     }
     
     if (limit) {
@@ -936,6 +949,9 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
     
     const url = `/newsrooms${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
+    console.log(`🌐 完整的 Newsroom API URL: ${url}`);
+    console.log(`🔍 查询参数详情:`, Object.fromEntries(queryParams.entries()));
+    
     const response = await strapiAPI.get<StrapiResponse<Article>>(url);
     
     const articles = response.data.data.map((news: any) => {
@@ -943,6 +959,7 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
       console.log('Raw newsroom data:', {
         id: news.id,
         title: news.title || news.attributes?.title,
+        locale: news.locale,
         hasAttributes: !!news.attributes,
         cover: news.cover || news.attributes?.cover
       });
@@ -954,6 +971,7 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
           title: news.attributes.title,
           slug: news.attributes.slug,
           description: news.attributes.description,
+          descript: news.attributes.descript,
           content: news.attributes.content,
           cover: news.attributes.cover,
           author: news.attributes.author,
@@ -970,6 +988,7 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
           title: news.title,
           slug: news.slug,
           description: news.description,
+          descript: news.descript,
           content: news.content,
           cover: news.cover,
           author: news.author,

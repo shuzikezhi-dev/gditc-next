@@ -32,8 +32,8 @@ export default function Home({ sectors }: HomeProps) {
   return (
     <Layout>
       <SEOHead
-        title={language === 'zh-Hans' ? '首页 | GDITE' : 'Home | GDITE'}
-        description={language === 'zh-Hans' ? '数字化国际贸易与商务协会官方网站' : 'Global Digital Infrastructure Technology Exchange'}
+        title={language === 'zh-Hans' ? '首页' : 'Home'}
+        description={language === 'zh-Hans' ? '数字基础设施技术委员会官方网站' : 'Global Digital Infrastructure Technology Exchange'}
       />
       
       <style jsx>{`
