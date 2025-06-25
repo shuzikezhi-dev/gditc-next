@@ -1,198 +1,283 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { GetStaticProps } from 'next'
+import { useRouter } from 'next/router'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getResources, Resource as StrapiResource } from '../lib/strapi'
+import { t, getTranslation } from '../lib/translations'
+import { useLanguage } from './_app'
 
 // 扩展Resource类型，添加id字段
-interface Resource extends StrapiResource {
+interface Resource {
   id: number;
+  title: string;
+  description: string;
+  type?: string;
+  downloadUrl?: string;
+  publishDate?: string;
+  fileSize?: string;
+  format?: string;
+  cover?: string | {
+    id?: number;
+    documentId?: string;
+    name?: string;
+    alternativeText?: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    formats?: any;
+    hash?: string;
+    ext?: string;
+    mime?: string;
+    size?: number;
+    url: string;
+    previewUrl?: string;
+    provider?: string;
+    provider_metadata?: any;
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+  };
 }
 
-// 假数据
-const mockResources: Resource[] = [
-  {
-    id: 1,
-    title: 'AI Infrastructure Benchmarking Guide',
-    content: 'Comprehensive guide for evaluating AI computing infrastructure performance and efficiency metrics.',
-    type: 'whitepaper'
-  },
-  {
-    id: 2,
-    title: 'Data Center Sustainability Report 2024',
-    content: 'Annual report on sustainable data center practices and environmental impact reduction strategies.',
-    type: 'report'
-  },
-  {
-    id: 3,
-    title: 'Cloud Security Implementation Case Study',
-    content: 'Real-world case study demonstrating successful cloud security architecture deployment.',
-    type: 'case'
-  },
-  {
-    id: 4,
-    title: 'Network Standards Compliance Guidelines',
-    content: 'Step-by-step guidelines for achieving compliance with international network infrastructure standards.',
-    type: 'guide'
-  },
-  {
-    id: 5,
-    title: 'Cybersecurity Framework White Paper',
-    content: 'Technical white paper outlining comprehensive cybersecurity frameworks for digital infrastructure.',
-    type: 'whitepaper'
-  },
-  {
-    id: 6,
-    title: 'Digital Transformation Technical Report',
-    content: 'In-depth technical analysis of digital transformation trends and implementation strategies.',
-    type: 'report'
-  }
-]
-
-export default function Resources({ resources = mockResources }: { resources?: Resource[] }) {
+export default function Resources() {
+  const { language } = useLanguage()
+  const router = useRouter()
+  const { type } = router.query
+  
+  const [activeType, setActiveType] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('all')
 
-  const categories = [
-    { id: 'all', name: 'All Resources', icon: '📚' },
-    { id: 'whitepaper', name: 'White Papers', icon: '📄' },
-    { id: 'report', name: 'Technical Reports', icon: '📊' },
-    { id: 'case', name: 'Case Studies', icon: '💼' },
-    { id: 'guide', name: 'Guidelines', icon: '📖' }
-  ]
+  // 从URL参数初始化状态
+  useEffect(() => {
+    if (router.isReady) {
+      const urlType = (type as string) || 'all'
+      setActiveType(urlType)
+    }
+  }, [router.isReady, router.query])
 
-  const filteredResources = resources?.filter(resource => {
+  // 获取资源数据
+  const getMockResources = () => {
+    const translations = getTranslation(language)
+    return [
+      {
+        id: 1,
+        type: 'white-papers',
+        title: translations.resources.data.title1,
+        description: translations.resources.data.description1,
+        downloadUrl: '/DITC-CM-001：DITC Membership System and Fee Standards.pdf',
+        publishDate: '2024-01-15',
+        fileSize: '2.1 MB',
+        format: 'PDF',
+        cover: '/images/blog/blog-01.jpg'
+      },
+      {
+        id: 2,
+        type: 'technical-reports',
+        title: translations.resources.data.title2,
+        description: translations.resources.data.description2,
+        downloadUrl: '#',
+        publishDate: '2024-01-20',
+        fileSize: '3.5 MB',
+        format: 'PDF',
+        cover: '/images/blog/blog-02.jpg'
+      },
+      {
+        id: 3,
+        type: 'case-studies',
+        title: translations.resources.data.title3,
+        description: translations.resources.data.description3,
+        downloadUrl: '#',
+        publishDate: '2024-02-01',
+        fileSize: '1.8 MB',
+        format: 'PDF',
+        cover: '/images/blog/blog-03.jpg'
+      },
+      {
+        id: 4,
+        type: 'white-papers',
+        title: translations.resources.data.title4,
+        description: translations.resources.data.description4,
+        downloadUrl: '#',
+        publishDate: '2024-02-10',
+        fileSize: '2.7 MB',
+        format: 'PDF',
+        cover: '/images/blog/blog-01.jpg'
+      },
+      {
+        id: 5,
+        type: 'technical-reports',
+        title: translations.resources.data.title5,
+        description: translations.resources.data.description5,
+        downloadUrl: '#',
+        publishDate: '2024-02-15',
+        fileSize: '4.2 MB',
+        format: 'PDF',
+        cover: '/images/blog/blog-02.jpg'
+      },
+      {
+        id: 6,
+        type: 'case-studies',
+        title: translations.resources.data.title6,
+        description: translations.resources.data.description6,
+        downloadUrl: '#',
+        publishDate: '2024-02-20',
+        fileSize: '2.3 MB',
+        format: 'PDF',
+        cover: '/images/blog/blog-03.jpg'
+      }
+    ]
+  }
+
+  const resourcesData = getMockResources()
+  
+  // 处理类型筛选
+  const handleTypeChange = (newType: string) => {
+    setActiveType(newType)
+    
+    // 更新URL参数
+    const newUrl = newType === 'all' ? '/resources' : `/resources?type=${newType}`
+    router.push(newUrl, undefined, { shallow: true })
+  }
+
+  const filteredResources = resourcesData?.filter(resource => {
     const matchesSearch = resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         resource.content.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = categoryFilter === 'all' || resource.type === categoryFilter
+                         resource.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesCategory = activeType === 'all' || resource.type === activeType
     return matchesSearch && matchesCategory
   }) || []
+
+  // 格式化日期
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString(language === 'zh-Hans' ? 'zh-CN' : 'en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
+  }
 
   return (
     <>
       <SEOHead
-        title="Resources | DITC"
-        description="Access white papers, technical reports, case studies and other valuable resources"
+        title={t(language, 'resources.pageTitle')}
+        description={t(language, 'resources.pageDescription')}
       />
       <Layout>
         {/* Banner */}
         <div className="relative z-10 overflow-hidden pt-[120px] pb-[60px] md:pt-[130px] lg:pt-[160px] dark:bg-dark">
           <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-stroke/0 via-stroke dark:via-dark-3 to-stroke/0"></div>
           <div className="container mx-auto px-4">
-            <div className="text-center">
-              <h1 className="mb-4 text-3xl font-bold text-dark dark:text-white sm:text-4xl md:text-[40px] md:leading-[1.2]">
-                Resources
-              </h1>
-              <ul className="flex items-center justify-center gap-[10px] flex-wrap">
-                <li>
-                  <button
-                    onClick={() => setCategoryFilter('whitepaper')}
-                    className={`text-base font-medium transition-colors ${
-                      categoryFilter === 'whitepaper' 
-                        ? 'text-dark dark:text-white' 
-                        : 'text-body-color dark:text-dark-6 hover:text-primary'
-                    }`}
-                  >
-                    White Papers
-                  </button>
-                </li>
-                <li className="flex items-center">
-                  <span className="text-body-color dark:text-dark-6 mr-[10px]"> / </span>
-                  <button
-                    onClick={() => setCategoryFilter('report')}
-                    className={`text-base font-medium transition-colors ${
-                      categoryFilter === 'report' 
-                        ? 'text-dark dark:text-white' 
-                        : 'text-body-color dark:text-dark-6 hover:text-primary'
-                    }`}
-                  >
-                    Technical Reports
-                  </button>
-                </li>
-                <li className="flex items-center">
-                  <span className="text-body-color dark:text-dark-6 mr-[10px]"> / </span>
-                  <button
-                    onClick={() => setCategoryFilter('case')}
-                    className={`text-base font-medium transition-colors ${
-                      categoryFilter === 'case' 
-                        ? 'text-dark dark:text-white' 
-                        : 'text-body-color dark:text-dark-6 hover:text-primary'
-                    }`}
-                  >
-                    Case Studies
-                  </button>
-                </li>
-              </ul>
+            <div className="flex flex-wrap items-center -mx-4">
+              <div className="w-full px-4">
+                <div className="text-center">
+                  <h1 className="mb-4 text-3xl font-bold text-dark dark:text-white sm:text-4xl md:text-[40px] md:leading-[1.2]">
+                    {t(language, 'resources.title')}
+                  </h1>
+
+                  <ul className="flex items-center justify-center gap-[10px] flex-wrap">
+                    <li>
+                      <button
+                        onClick={() => handleTypeChange('white-papers')}
+                        className={`text-base font-medium transition-colors ${
+                          activeType === 'white-papers' 
+                            ? 'text-dark dark:text-white' 
+                            : 'text-body-color dark:text-dark-6 hover:text-primary'
+                        }`}
+                      >
+                        {t(language, 'resources.types.whitePapers')}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => handleTypeChange('technical-reports')}
+                        className={`flex items-center gap-[10px] text-base font-medium ${
+                          activeType === 'technical-reports' 
+                            ? 'text-dark dark:text-white' 
+                            : 'text-body-color dark:text-dark-6 hover:text-primary'
+                        }`}
+                      >
+                        <span className="text-body-color dark:text-dark-6"> / </span>
+                        {t(language, 'resources.types.technicalReports')}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        onClick={() => handleTypeChange('case-studies')}
+                        className={`flex items-center gap-[10px] text-base font-medium ${
+                          activeType === 'case-studies' 
+                            ? 'text-dark dark:text-white' 
+                            : 'text-body-color dark:text-dark-6 hover:text-primary'
+                        }`}
+                      >
+                        <span className="text-body-color dark:text-dark-6"> / </span>
+                        {t(language, 'resources.types.caseStudies')}
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Search & Filter */}
-        {/* <section className="py-16 bg-gray-50 dark:bg-dark-2">
+        {/* Resources Grid - HTML样式 */}
+        <section className="pt-20 pb-10 lg:pt-[120px] lg:pb-20 dark:bg-dark">
           <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search resources..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-6 py-4 pl-12 rounded-lg border border-gray-200 dark:border-dark-3 bg-white dark:bg-dark text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-4">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setCategoryFilter(category.id)}
-                  className={`px-6 py-3 rounded-full flex items-center gap-2 transition-all duration-300 ${
-                    categoryFilter === category.id
-                      ? 'bg-primary text-white shadow-lg'
-                      : 'bg-white dark:bg-dark text-body-color dark:text-white hover:bg-primary/10 border border-gray-200 dark:border-dark-3'
-                  }`}
-                >
-                  <span>{category.icon}</span>
-                  <span className="font-medium">{category.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section> */}
-
-        {/* Resources Grid */}
-        <section className="py-20 lg:py-[120px]">
-          <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {filteredResources.map((resource) => (
-                <div key={resource.id} className="bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-dark-3 overflow-hidden hover:shadow-xl transition-all duration-300">
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-dark dark:text-white mb-4 line-clamp-2">
-                      {resource.title}
-                    </h3>
-                    <p className="text-body-color dark:text-dark-6 mb-6 line-clamp-3">
-                      {resource.content}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-body-color dark:text-dark-6">
-                        PDF Document
-                      </span>
-                      <a href={`/resources/${resource.id}`} className="inline-flex items-center text-primary hover:text-primary/80 font-medium">
-                        View Details
-                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
+            <div className="flex flex-wrap -mx-4">
+              {filteredResources.map((resource, index) => (
+                <div key={resource.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
+                  <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
+                    <div className="mb-8 overflow-hidden rounded-[5px]">
+                      <a href={resource.downloadUrl} className="block">
+                        <img
+                          src={
+                            typeof resource.cover === 'object' && resource.cover 
+                              ? (resource.cover as any).url || '/images/blog/blog-01.jpg'
+                              : typeof resource.cover === 'string' 
+                                ? resource.cover 
+                                : '/images/blog/blog-01.jpg'
+                          }
+                          alt={
+                            typeof resource.cover === 'object' && resource.cover 
+                              ? (resource.cover as any).alternativeText || resource.title
+                              : resource.title
+                          }
+                          className="w-full transition group-hover:rotate-6 group-hover:scale-125"
+                        />
                       </a>
+                    </div>
+                    <div>
+                      <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
+                        {formatDate(resource.publishDate)}
+                      </span>
+                      <h3>
+                        <a
+                          href={resource.downloadUrl}
+                          className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                        >
+                          {resource.title}
+                        </a>
+                      </h3>
+                      <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
+                        {resource.description}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
+
+            {filteredResources.length === 0 && (
+              <div className="text-center py-20">
+                <h3 className="text-xl font-semibold text-dark dark:text-white mb-4">
+                  {t(language, 'resources.noResourcesFound')}
+                </h3>
+                <p className="text-body-color dark:text-dark-6">
+                  {t(language, 'resources.noResourcesDesc')}
+                </p>
+              </div>
+            )}
           </div>
         </section>
       </Layout>
@@ -202,18 +287,14 @@ export default function Resources({ resources = mockResources }: { resources?: R
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    const resources = await getResources()
+    // 由于这个页面使用mock数据，我们只返回空对象
     return {
-      props: {
-        resources: resources || []
-      }
+      props: {}
     }
   } catch (error) {
-    console.error('Error fetching resources:', error)
+    console.error('Error in getStaticProps:', error)
     return {
-      props: {
-        resources: []
-      }
+      props: {}
     }
   }
 } 

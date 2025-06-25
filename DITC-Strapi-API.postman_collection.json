@@ -1,0 +1,588 @@
+{
+  "info": {
+    "name": "DITC Strapi API 测试集合",
+    "description": "用于测试DITC项目Strapi API的完整集合，包含列表和详情接口，支持中英文语言切换",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "strapi_url",
+      "value": "https://wonderful-serenity-47deffe3a2.strapiapp.com/api",
+      "type": "string"
+    },
+    {
+      "key": "api_token",
+      "value": "your_api_token_here",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{api_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "🔗 连接测试",
+      "item": [
+        {
+          "name": "测试基本连接",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "检查i18n配置",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/i18n/locales",
+              "host": ["{{strapi_url}}"],
+              "path": ["i18n", "locales"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Sectors 列表",
+      "item": [
+        {
+          "name": "Sectors列表 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sectors列表 - 中文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors?locale=zh-Hans&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "zh-Hans"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sectors列表 - 所有语言",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors?locale=all&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "all"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📄 Sectors 详情",
+      "item": [
+        {
+          "name": "方案1: documentId直接获取 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors/:documentId?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors", ":documentId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从列表接口获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "方案1: documentId直接获取 - 中文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors/:documentId?locale=zh-Hans&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors", ":documentId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "zh-Hans"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从列表接口获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "方案2: 筛选documentId - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors?filters[documentId][$eq]=:documentId&locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors"],
+              "query": [
+                {
+                  "key": "filters[documentId][$eq]",
+                  "value": ":documentId"
+                },
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从列表接口获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "方案2: 筛选documentId - 中文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors?filters[documentId][$eq]=:documentId&locale=zh-Hans&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors"],
+              "query": [
+                {
+                  "key": "filters[documentId][$eq]",
+                  "value": ":documentId"
+                },
+                {
+                  "key": "locale",
+                  "value": "zh-Hans"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从列表接口获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "方案3: 数字ID获取 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors/:id?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors", ":id"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "1",
+                  "description": "从列表接口获取的数字ID"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "方案4: artcileId筛选 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/sectors?filters[artcileId][$eq]=:artcileId&locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["sectors"],
+              "query": [
+                {
+                  "key": "filters[artcileId][$eq]",
+                  "value": ":artcileId"
+                },
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "artcileId",
+                  "value": "your_article_id_here",
+                  "description": "从列表接口获取的artcileId"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📰 Articles 接口",
+      "item": [
+        {
+          "name": "Articles列表 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/articles?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["articles"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Articles列表 - 中文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/articles?locale=zh-Hans&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["articles"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "zh-Hans"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Articles详情 - documentId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/articles/:documentId?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["articles", ":documentId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从Articles列表获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎯 Events 接口",
+      "item": [
+        {
+          "name": "Events列表 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/events?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["events"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Events详情 - documentId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/events/:documentId?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["events", ":documentId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从Events列表获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📚 Resources 接口",
+      "item": [
+        {
+          "name": "Resources列表 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/resources?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["resources"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Resources详情 - documentId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/resources/:documentId?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["resources", ":documentId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从Resources列表获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📢 Newsroom 接口",
+      "item": [
+        {
+          "name": "Newsroom列表 - 英文",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/newsroom?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["newsroom"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Newsroom详情 - documentId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{strapi_url}}/newsroom/:documentId?locale=en&populate=*",
+              "host": ["{{strapi_url}}"],
+              "path": ["newsroom", ":documentId"],
+              "query": [
+                {
+                  "key": "locale",
+                  "value": "en"
+                },
+                {
+                  "key": "populate",
+                  "value": "*"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "documentId",
+                  "value": "your_document_id_here",
+                  "description": "从Newsroom列表获取的documentId"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+} 

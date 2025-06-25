@@ -1,63 +1,55 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getEvents, type Event as StrapiEvent } from '../lib/strapi'
+import { t, getTranslation } from '../lib/translations'
+import { useLanguage } from './_app'
 
 // 扩展Event类型，添加id字段
 interface Event extends StrapiEvent {
   id: number;
 }
 
-// 假数据
-const mockEvents: Event[] = [
-  {
-    id: 1,
-    title: 'DITC Annual Conference 2024',
-    date: '2024-12-15',
-    content: 'Join us for the premier digital infrastructure conference featuring keynotes from industry leaders, technical sessions, and networking opportunities.',
-    location: 'Singapore Convention Centre'
-  },
-  {
-    id: 2,
-    title: 'AI Standards Workshop',
-    date: '2024-11-20',
-    content: 'A comprehensive workshop on developing AI standards for digital infrastructure, including hands-on sessions and expert panels.',
-    location: 'Virtual Event'
-  },
-  {
-    id: 3,
-    title: 'Cybersecurity Summit 2024',
-    date: '2024-10-25',
-    content: 'Explore the latest cybersecurity standards and best practices for protecting digital infrastructure in an evolving threat landscape.',
-    location: 'Tokyo International Forum'
-  },
-  {
-    id: 4,
-    title: 'Data Center Efficiency Forum',
-    date: '2024-09-18',
-    content: 'Discuss sustainable data center practices, energy efficiency standards, and green technology innovations.',
-    location: 'Amsterdam RAI'
-  },
-  {
-    id: 5,
-    title: 'Network Infrastructure Symposium',
-    date: '2024-08-22',
-    content: 'Technical deep-dive into next-generation network infrastructure standards, 5G deployment, and edge computing.',
-    location: 'San Francisco Moscone Center'
-  },
-  {
-    id: 6,
-    title: 'Digital Standards Bootcamp',
-    date: '2024-07-30',
-    content: 'Intensive training program for professionals looking to understand and implement digital infrastructure standards.',
-    location: 'London Excel Centre'
-  }
-]
+interface EventsProps {
+  initialEvents: Event[];
+  locale: string;
+}
 
-export default function Events({ events = mockEvents }: { events?: Event[] }) {
+export default function Events({ initialEvents = [], locale }: EventsProps) {
+  const { language } = useLanguage()
+  const [events, setEvents] = useState<Event[]>(initialEvents)
+  const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('all')
+  const [currentDataLocale, setCurrentDataLocale] = useState(locale) // 追踪当前数据的语言
+
+  // 监听语言变化，获取对应语言的数据
+  useEffect(() => {
+    const fetchEventsForLanguage = async () => {
+      if (language === currentDataLocale) return // 语言没变，无需重新获取
+      
+      setLoading(true)
+      try {
+        console.log(`🔄 语言切换为 ${language}，重新获取Events数据...`)
+        const response = await fetch(`/api/events?locale=${language}`)
+        if (response.ok) {
+          const newEvents = await response.json()
+          setEvents(newEvents)
+          setCurrentDataLocale(language) // 更新当前数据语言
+          console.log(`✅ 成功获取 ${newEvents.length} 条Events数据`)
+        } else {
+          console.error('❌ 获取Events数据失败')
+        }
+      } catch (error) {
+        console.error('❌ 获取Events数据时出错:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchEventsForLanguage()
+  }, [language, currentDataLocale])
 
   const upcomingEvents = events?.filter(event => new Date(event.date) > new Date()) || []
   const pastEvents = events?.filter(event => new Date(event.date) <= new Date()) || []
@@ -65,11 +57,71 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
   const displayEvents = filter === 'upcoming' ? upcomingEvents : 
                       filter === 'past' ? pastEvents : events || []
 
+  const getPageTitle = () => {
+    return language === 'zh-Hans' ? '活动' : 'Events'
+  }
+
+  const getPageDescription = () => {
+    return language === 'zh-Hans' 
+      ? '参加我们的活动、峰会和竞赛，推进数字基础设施标准' 
+      : 'Join our events, summits, and competitions to advance digital infrastructure standards'
+  }
+
+  const getFilterLabel = (filterType: string) => {
+    if (language === 'zh-Hans') {
+      switch (filterType) {
+        case 'all': return '所有活动'
+        case 'upcoming': return '即将举行'
+        case 'past': return '往期活动'
+        default: return filterType
+      }
+    } else {
+      switch (filterType) {
+        case 'all': return 'All Events'
+        case 'upcoming': return 'Upcoming Events'
+        case 'past': return 'Past Events'
+        default: return filterType
+      }
+    }
+  }
+
+  const getStatusLabel = (date: string) => {
+    const isUpcoming = new Date(date) > new Date()
+    if (language === 'zh-Hans') {
+      return isUpcoming ? '即将举行' : '已结束'
+    } else {
+      return isUpcoming ? 'Upcoming' : 'Past Event'
+    }
+  }
+
+  const getActionLabel = (date: string) => {
+    const isUpcoming = new Date(date) > new Date()
+    if (language === 'zh-Hans') {
+      return isUpcoming ? '立即报名' : '查看详情'
+    } else {
+      return isUpcoming ? 'Register' : 'View Details'
+    }
+  }
+
+  const getEmptyStateText = () => {
+    if (language === 'zh-Hans') {
+      return {
+        title: '暂无活动',
+        description: '请尝试选择不同的筛选条件或稍后查看更新。'
+      }
+    } else {
+      return {
+        title: 'No events found',
+        description: 'Try selecting a different filter or check back later for updates.'
+      }
+    }
+  }
+
   return (
     <>
       <SEOHead
-        title="Events | DITC"
-        description="Join our events, summits, and competitions to advance digital infrastructure standards"
+        title={`${getPageTitle()} | DITC`}
+        description={getPageDescription()}
       />
       <Layout>
         {/* Banner Section */}
@@ -80,7 +132,7 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
               <div className="w-full px-4">
                 <div className="text-center">
                   <h1 className="mb-4 text-3xl font-bold text-dark dark:text-white sm:text-4xl md:text-[40px] md:leading-[1.2]">
-                    Events
+                    {getPageTitle()}
                   </h1>
                   
                   <ul className="flex items-center justify-center gap-[10px] flex-wrap">
@@ -93,7 +145,7 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
                             : 'text-body-color dark:text-dark-6 hover:text-primary'
                         }`}
                       >
-                        All Events
+                        {getFilterLabel('all')}
                       </button>
                     </li>
                     <li className="flex items-center">
@@ -106,7 +158,7 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
                             : 'text-body-color dark:text-dark-6 hover:text-primary'
                         }`}
                       >
-                        Upcoming Events
+                        {getFilterLabel('upcoming')}
                       </button>
                     </li>
                     <li className="flex items-center">
@@ -119,7 +171,7 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
                             : 'text-body-color dark:text-dark-6 hover:text-primary'
                         }`}
                       >
-                        Past Events
+                        {getFilterLabel('past')}
                       </button>
                     </li>
                   </ul>
@@ -129,207 +181,113 @@ export default function Events({ events = mockEvents }: { events?: Event[] }) {
           </div>
         </div>
 
-        {/* Filter Section */}
-        {/* <section className="py-16 bg-gray-50 dark:bg-dark-2">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-wrap justify-center gap-4 mb-8">
-              {[
-                { id: 'all', name: 'All Events', count: events?.length || 0 },
-                { id: 'upcoming', name: 'Upcoming Events', count: upcomingEvents.length },
-                { id: 'past', name: 'Past Events', count: pastEvents.length }
-              ].map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setFilter(type.id)}
-                  className={`px-6 py-3 rounded-full flex items-center gap-2 transition-all duration-300 ${
-                    filter === type.id
-                      ? 'bg-primary text-white shadow-lg'
-                      : 'bg-white dark:bg-dark text-body-color dark:text-white hover:bg-primary/10 dark:hover:bg-primary/20 border border-gray-200 dark:border-dark-3'
-                  }`}
-                >
-                  <span className="font-medium">{type.name}</span>
-                  <span className={`px-2 py-1 rounded-full text-xs ${
-                    filter === type.id ? 'bg-white text-primary' : 'bg-gray-200 dark:bg-dark-3 text-gray-600 dark:text-gray-400'
-                  }`}>
-                    {type.count}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section> */}
-
-        {/* Featured Event - Summit 2024 */}
-        {/* <section className="py-20 lg:py-[120px]">
-          <div className="container mx-auto px-4">
-            <div className="bg-gradient-to-r from-primary to-secondary rounded-2xl p-8 md:p-16 text-white mb-16">
-              <div className="max-w-4xl mx-auto text-center">
-                <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium mb-6">
-                  <span className="mr-2">🎉</span>
-                  Featured Event
-                </div>
-                <h2 className="text-3xl md:text-5xl font-bold mb-6">
-                  DITC Global Summit 2024
-                </h2>
-                <p className="text-xl mb-8 opacity-90">
-                  Join industry leaders, researchers, and innovators for the premier digital infrastructure conference of the year.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <div className="text-2xl mb-2">📅</div>
-                    <div className="font-semibold">Date</div>
-                    <div className="opacity-90">November 15-17, 2024</div>
-                  </div>
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <div className="text-2xl mb-2">📍</div>
-                    <div className="font-semibold">Location</div>
-                    <div className="opacity-90">Singapore</div>
-                  </div>
-                  <div className="bg-white/10 rounded-lg p-4">
-                    <div className="text-2xl mb-2">👥</div>
-                    <div className="font-semibold">Attendees</div>
-                    <div className="opacity-90">1000+ Professionals</div>
-                  </div>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <a href="#" className="px-8 py-4 bg-white text-primary rounded-lg font-semibold hover:bg-gray-100 transition-colors">
-                    Register Now
-                  </a>
-                  <a href="#" className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold hover:bg-white hover:text-primary transition-colors">
-                    View Agenda
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section> */}
-
         {/* Events List */}
-        <section className="pb-20 lg:pb-[120px]">
+        <section className="pt-20 pb-10 lg:pt-[120px] lg:pb-20 dark:bg-dark">
           <div className="container mx-auto px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {displayEvents.map((event) => (
-                <div
-                  key={event.id}
-                  className="bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-dark-3 overflow-hidden hover:shadow-xl transition-all duration-300"
-                >
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            new Date(event.date) > new Date()
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
-                          }`}>
-                            {new Date(event.date) > new Date() ? 'Upcoming' : 'Past Event'}
-                          </span>
-                        </div>
-                        <h3 className="text-xl font-bold text-dark dark:text-white mb-2">
-                          {event.title}
+            {loading && (
+              <div className="text-center py-20">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="mt-4 text-body-color dark:text-dark-6">
+                  {language === 'zh-Hans' ? '加载中...' : 'Loading...'}
+                </p>
+              </div>
+            )}
+
+            {!loading && displayEvents.length > 0 && (
+              <div className="flex flex-wrap -mx-4">
+                {displayEvents.map((event, index) => (
+                  <div key={event.documentId || event.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
+                    <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
+                      <div className="mb-8 overflow-hidden rounded-[5px]">
+                        <a href={`/events/${event.documentId || event.id}`} className="block">
+                          <img
+                            src={event.cover?.url || '/images/blog/blog-01.jpg'}
+                            alt={event.cover?.alternativeText || event.title}
+                            className="w-full transition group-hover:rotate-6 group-hover:scale-125"
+                            onError={(e) => {
+                              console.log('Event image load error:', event.id, 'cover:', event.cover);
+                            }}
+                            onLoad={() => {
+                              if (event.cover?.url) {
+                                console.log('Event image loaded successfully:', event.id, 'URL:', event.cover.url);
+                              }
+                            }}
+                          />
+                        </a>
+                      </div>
+                      <div>
+                        <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
+                          {new Date(event.date).toLocaleDateString(language === 'zh-Hans' ? 'zh-CN' : 'en-US')}
+                        </span>
+                        <h3>
+                          <a
+                            href={`/events/${event.documentId || event.id}`}
+                            className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                          >
+                            {event.title}
+                          </a>
                         </h3>
+                        <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
+                          {event.content && event.content.length > 150 
+                            ? `${event.content.substring(0, 150)}...` 
+                            : event.content}
+                        </p>
                       </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 mb-4 text-sm text-body-color dark:text-dark-6">
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        {new Date(event.date).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        {event.location}
-                      </div>
-                    </div>
-
-                    <p className="text-body-color dark:text-dark-6 mb-6 line-clamp-3">
-                      {event.content}
-                    </p>
-
-                    <div className="flex items-center justify-between">
-                      <a
-                        href={`/events/${event.id}`}
-                        className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
-                      >
-                        {new Date(event.date) > new Date() ? 'Register' : 'View Details'}
-                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </a>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
-            {displayEvents.length === 0 && (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">📅</div>
-                <h3 className="text-2xl font-bold text-dark dark:text-white mb-2">No events found</h3>
+            {!loading && displayEvents.length === 0 && (
+              <div className="text-center py-20">
+                <h3 className="text-xl font-semibold text-dark dark:text-white mb-4">
+                  {getEmptyStateText().title}
+                </h3>
                 <p className="text-body-color dark:text-dark-6">
-                  Try selecting a different filter or check back later for updates.
+                  {getEmptyStateText().description}
                 </p>
               </div>
             )}
           </div>
         </section>
-
-        {/* Newsletter Signup */}
-        {/* <section className="bg-gray-1 py-20 dark:bg-dark-2 lg:py-[120px]">
-          <div className="container mx-auto px-4">
-            <div className="max-w-2xl mx-auto text-center">
-              <h2 className="text-3xl font-bold text-dark dark:text-white mb-4">
-                Stay Updated
-              </h2>
-              <p className="text-lg text-body-color dark:text-dark-6 mb-8">
-                Subscribe to our newsletter to receive updates about upcoming events, announcements, and industry insights.
-              </p>
-              <form className="flex flex-col sm:flex-row gap-4">
-                <input
-                  type="email"
-                  placeholder="Enter your email address"
-                  className="flex-1 px-6 py-4 rounded-lg border border-gray-200 dark:border-dark-3 bg-white dark:bg-dark text-dark dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button
-                  type="submit"
-                  className="px-8 py-4 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors"
-                >
-                  Subscribe
-                </button>
-              </form>
-            </div>
-          </div>
-        </section> */}
       </Layout>
     </>
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale = 'en' }) => {
   try {
-    const events = await getEvents()
-    // 将Strapi事件转换为带有id的Event类型
+    console.log(`🔄 正在为 ${locale} 生成Events静态页面...`)
+    
+    const events = await getEvents(undefined, locale)
+    
+    // 将Strapi事件转换为带有id的Event类型，并清理undefined值
     const eventsWithId: Event[] = events.map((event, index) => ({
       ...event,
-      id: index + 1 // 临时ID，实际应该从Strapi获取
+      id: event.id || index + 1
     }))
+    
+    // 使用JSON.parse(JSON.stringify())清理undefined值，防止序列化错误
+    const serializedEvents = JSON.parse(JSON.stringify(eventsWithId))
+    
+    console.log(`✅ 成功为 ${locale} 获取 ${eventsWithId.length} 条Events数据`)
     
     return {
       props: {
-        events: eventsWithId.length > 0 ? eventsWithId : mockEvents
-      }
+        initialEvents: serializedEvents,
+        locale,
+      },
+      revalidate: eventsWithId.length > 0 ? 3600 : 60, // 有数据时1小时，无数据时1分钟
     }
   } catch (error) {
-    console.error('Error fetching events:', error)
+    console.error(`❌ 为 ${locale} 生成Events静态页面失败:`, error)
     return {
       props: {
-        events: mockEvents
-      }
+        initialEvents: [],
+        locale,
+      },
+      revalidate: 60, // 1分钟后重试
     }
   }
 } 

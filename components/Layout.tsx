@@ -2,33 +2,37 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import LanguageSwitcher from './LanguageSwitcher';
+import { t } from '../lib/translations';
+import { useLanguage } from '../pages/_app';
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentLanguage?: string;
-  onLanguageChange?: (language: string) => void;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageChange }) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);
   const router = useRouter();
+  const { language } = useLanguage();
 
-  // 导航菜单项
+  // 导航菜单项 - 删除News，只保留Newsroom
   const navigationItems = [
-    { href: '/', label: 'Home' },
-    { href: '/about', label: 'About DITC' },
-    { href: '/sectors', label: 'Sectors' },
-    { href: '/activities-services', label: 'Activities & Services' },
-    { href: '/events', label: 'Events' },
-    { href: '/resources', label: 'Resources' },
-    { href: '/news', label: 'News' },
-    { href: '/newsroom', label: 'Newsroom' },
-    { href: '/join-us', label: 'Join Us' },
+    { href: '/', label: t(language, 'navigation.home'), key: 'home' },
+    { href: '/about', label: t(language, 'navigation.about'), key: 'about' },
+    { href: '/sectors', label: t(language, 'navigation.sectors'), key: 'sectors' },
+    { href: '/activities-services', label: t(language, 'navigation.activitiesServices'), key: 'activities' },
+    { href: '/events', label: t(language, 'navigation.events'), key: 'events' },
+    { href: '/newsroom', label: t(language, 'navigation.newsroom'), key: 'newsroom' },
+    { href: '/join-us', label: t(language, 'navigation.joinUs'), key: 'joinUs' },
   ];
 
-  // 下拉菜单项 - 现在为空
-  const pagesItems: { href: string; label: string }[] = [];
+  // Resources下拉菜单项
+  const resourcesItems = [
+    { href: '/resources?type=white-papers', label: t(language, 'navigation.resourcesMenu.whitePapers') },
+    { href: '/resources?type=technical-reports', label: t(language, 'navigation.resourcesMenu.technicalReports') },
+    { href: '/resources?type=case-studies', label: t(language, 'navigation.resourcesMenu.caseStudies') },
+  ];
 
   // 社交媒体链接
   const socialLinks = [
@@ -47,12 +51,18 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
     }
   };
 
+  // 检查当前路径是否匹配导航项
+  const isActiveRoute = (href: string) => {
+    if (href === '/') {
+      return router.pathname === '/';
+    }
+    return router.pathname.startsWith(href);
+  };
+
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
-      {/* 语言切换栏 */}
+      {/* 语言切换栏 - 修改样式 */}
       <LanguageSwitcher 
-        currentLanguage={currentLanguage} 
-        onLanguageChange={onLanguageChange}
         isDarkMode={isDarkMode}
         onToggleDarkMode={toggleDarkMode}
       />
@@ -65,11 +75,10 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
             <div className="flex items-center">
               <Link href="/" className="flex items-center space-x-3">
                 <img 
-                  src="/logo.png" 
+                  src="/logo_ditc.png" 
                   alt="DITC Logo" 
-                  className="h-12 w-auto" 
+                  className="h-16 w-auto" 
                 />
-                <span className="text-2xl font-bold text-gray-900 dark:text-white">DITC</span>
               </Link>
             </div>
 
@@ -79,36 +88,48 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                 <Link 
                   key={item.href}
                   href={item.href}
-                  className={`text-gray-700 hover:text-primary font-medium transition-colors dark:text-gray-300 dark:hover:text-primary ${
-                    router.pathname === item.href ? 'text-primary' : ''
+                  className={`font-medium transition-colors dark:hover:text-primary ${
+                    isActiveRoute(item.href) 
+                      ? 'text-blue-600 dark:text-blue-400' // 当前页面是蓝色
+                      : 'text-gray-900 hover:text-primary dark:text-white dark:hover:text-primary' // 其他页面是黑色/白色
                   }`}
                 >
                   {item.label}
                 </Link>
               ))}
               
-              {/* Pages 下拉菜单 - 隐藏因为没有项目 */}
-              {pagesItems.length > 0 && (
-                <div className="relative group">
-                  <button className="flex items-center text-primary font-medium">
-                    Pages
-                    <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  <div className="absolute top-full left-0 hidden w-48 bg-white rounded-lg shadow-lg dark:bg-dark-2 group-hover:block">
-                    {pagesItems.map((item) => (
+              {/* Resources 下拉菜单 */}
+              <div 
+                className="relative group"
+                onMouseEnter={() => setIsResourcesDropdownOpen(true)}
+                onMouseLeave={() => setIsResourcesDropdownOpen(false)}
+              >
+                <button 
+                  className={`flex items-center font-medium transition-colors dark:hover:text-primary ${
+                    isActiveRoute('/resources') 
+                      ? 'text-gray-600 dark:text-gray-400' // 当前页面是灰色
+                      : 'text-gray-900 hover:text-primary dark:text-white dark:hover:text-primary' // 其他页面是黑色/白色
+                  }`}
+                >
+                  {t(language, 'navigation.resources')}
+                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isResourcesDropdownOpen && (
+                  <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg dark:bg-dark-2 border border-gray-200 dark:border-gray-700">
+                    {resourcesItems.map((item) => (
                       <Link 
                         key={item.href}
                         href={item.href}
-                        className="block px-4 py-2 text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                        className="block px-4 py-3 text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800 first:rounded-t-lg last:rounded-b-lg transition-colors"
                       >
                         {item.label}
                       </Link>
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* 右侧控制按钮 */}
@@ -139,20 +160,23 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                   {item.label}
                 </Link>
               ))}
-              {pagesItems.length > 0 && (
-                <div className="border-t pt-2 mt-2">
-                  {pagesItems.map((item) => (
-                    <Link 
-                      key={item.href}
-                      href={item.href}
-                      className="block py-2 text-gray-700 hover:text-primary dark:text-gray-300"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
+              
+              {/* 移动端Resources菜单 */}
+              <div className="border-t pt-2 mt-2">
+                <div className="pb-2 text-gray-700 dark:text-gray-300 font-medium">
+                  {t(language, 'navigation.resources')}
                 </div>
-              )}
+                {resourcesItems.map((item) => (
+                  <Link 
+                    key={item.href}
+                    href={item.href}
+                    className="block py-2 pl-4 text-gray-700 hover:text-primary dark:text-gray-300"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
             </div>
           )}
         </nav>
@@ -182,7 +206,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
             <div className="footer-section w-full px-4 lg:w-4/12 lg:flex-shrink-0 lg:pr-8">
               <div className="w-full mb-10">
                 <p className="mb-4 text-base text-white font-medium">
-                  The Global Trust Framework for Digital Infrastructure
+                  {t(language, 'footer.tagline')}
                 </p>
                 <div className="flex items-center -mx-3 mb-8">
                   <a href="#" className="px-3 text-white hover:text-primary">
@@ -204,12 +228,12 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
 
                 {/* Newsletter Section - Hidden */}
                 <div className="mt-8 hidden">
-                  <h3 className="text-lg font-semibold text-white mb-6">Stay Updated</h3>
+                  <h3 className="text-lg font-semibold text-white mb-6">{t(language, 'footer.stayUpdated')}</h3>
                   <form className="newsletter-form mb-4">
                     <div className="relative">
                       <input 
                         type="email" 
-                        placeholder="Your email address" 
+                        placeholder={t(language, 'footer.emailPlaceholder')} 
                         required 
                         className="w-full pl-3 pr-20 py-2 bg-transparent text-white border border-gray-600 rounded-md focus:border-primary focus:outline-none placeholder:text-gray-300 text-sm" 
                       />
@@ -217,11 +241,11 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                         type="submit" 
                         className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 text-white bg-primary rounded hover:bg-blue-dark transition duration-300 text-xs"
                       >
-                        Subscribe
+                        {t(language, 'footer.subscribe')}
                       </button>
                     </div>
                   </form>
-                  <p className="small-text text-xs text-white">Get the latest standards updates and event announcements</p>
+                  <p className="small-text text-xs text-white">{t(language, 'footer.subscribeText')}</p>
                 </div>
               </div>
             </div>
@@ -232,31 +256,31 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                 {/* Column 2: Quick Links */}
                 <div className="footer-section w-full px-4 sm:w-1/2 md:w-1/2 lg:w-1/3">
                   <div className="w-full mb-10">
-                    <h3 className="text-lg font-semibold text-white mb-9">Quick Links</h3>
+                    <h3 className="text-lg font-semibold text-white mb-9">{t(language, 'footer.quickLinks')}</h3>
                     <ul>
                       <li>
                         <Link href="/about" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          About DITC
+                          {t(language, 'footer.quickLinksItems.aboutDitc')}
                         </Link>
                       </li>
                       <li>
                         <Link href="/join-us" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Membership
+                          {t(language, 'footer.quickLinksItems.membership')}
                         </Link>
                       </li>
                       <li>
                         <Link href="/resources" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Standards & Publications
+                          {t(language, 'footer.quickLinksItems.standardsPublications')}
                         </Link>
                       </li>
                       <li>
                         <Link href="/events" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Events & Conferences
+                          {t(language, 'footer.quickLinksItems.eventsConferences')}
                         </Link>
                       </li>
                       <li>
                         <Link href="/newsroom" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Newsroom
+                          {t(language, 'footer.quickLinksItems.newsroom')}
                         </Link>
                       </li>
                     </ul>
@@ -266,31 +290,31 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                 {/* Column 3: Resources */}
                 <div className="footer-section w-full px-4 sm:w-1/2 md:w-1/2 lg:w-1/3">
                   <div className="w-full mb-10">
-                    <h3 className="text-lg font-semibold text-white mb-9">Resources</h3>
+                    <h3 className="text-lg font-semibold text-white mb-9">{t(language, 'navigation.resources')}</h3>
                     <ul>
                       <li>
                         <Link href="/resources" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Document Library
+                          {t(language, 'footer.resourcesItems.documentLibrary')}
                         </Link>
                       </li>
                       <li>
                         <Link href="/activities-services" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Certification Programs
+                          {t(language, 'footer.resourcesItems.certificationPrograms')}
                         </Link>
                       </li>
                       <li>
                         <Link href="/sectors" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Technical Committees
+                          {t(language, 'footer.resourcesItems.technicalCommittees')}
                         </Link>
                       </li>
                       <li>
                         <a href="#" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          FAQs
+                          {t(language, 'footer.resourcesItems.faqs')}
                         </a>
                       </li>
                       <li>
                         <a href="#" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          Terminology Glossary
+                          {t(language, 'footer.resourcesItems.terminologyGlossary')}
                         </a>
                       </li>
                     </ul>
@@ -300,7 +324,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
                 {/* Column 4: Contact */}
                 <div className="footer-section w-full px-4 sm:w-1/2 md:w-1/2 lg:w-1/3">
                   <div className="w-full mb-10">
-                    <h3 className="text-lg font-semibold text-white mb-9">Contact Us</h3>
+                    <h3 className="text-lg font-semibold text-white mb-9">{t(language, 'footer.contactUs')}</h3>
                     <address className="not-italic">
                       <p className="mb-4 text-base text-white flex items-start">
                         <svg width="16" height="20" className="mt-1 mr-3 fill-current text-primary" viewBox="0 0 29 35">
@@ -329,47 +353,15 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        {/* <div className="footer-bottom mt-12 border-t border-[#8890A4]/40 py-8 lg:mt-[60px]">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-wrap items-center justify-between -mx-4">
-              <div className="w-full px-4 md:w-2/3 lg:w-auto flex-grow">
-                <div className="legal-links flex items-center justify-center md:justify-start hidden">
-                  <a href="#" className="px-3 text-base text-white hover:text-primary hover:underline">
-                    Privacy Policy
-                  </a>
-                  <span className="text-white">|</span>
-                  <a href="#" className="px-3 text-base text-white hover:text-primary hover:underline">
-                    Terms of Use
-                  </a>
-                  <span className="text-white">|</span>
-                  <a href="#" className="px-3 text-base text-white hover:text-primary hover:underline">
-                    Cookie Policy
-                  </a>
-                  <span className="text-white">|</span>
-                  <a href="#" className="px-3 text-base text-white hover:text-primary hover:underline">
-                    Sitemap
-                  </a>
-                </div>
-              </div>
-
-              <div className="w-full px-4 md:w-1/3 lg:w-auto">
-                <div className="badges flex justify-center md:justify-end items-center">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
         {/* Copyright & Company Registration Info */}
         <div className="border-t border-[#8890A4]/40 py-6">
           <div className="container mx-auto px-4">
             <div className="text-center space-y-3">
               <p className="text-base text-white">
-                &copy; 2024 Digital Infrastructure Technical Council. All Rights Reserved.
+                {t(language, 'footer.copyright')}
               </p>
               <p className="text-sm text-white">
-                DIGITAL INFRASTRUCTURE TECHNICAL COUNCIL LTD. Register No. 202438789K
+                {t(language, 'footer.companyRegistration')}
               </p>
             </div>
           </div>
@@ -401,7 +393,7 @@ const Layout: React.FC<LayoutProps> = ({ children, currentLanguage, onLanguageCh
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         className="fixed bottom-8 right-8 w-10 h-10 bg-primary text-white rounded-md shadow-lg hover:bg-primary/90 transition-colors z-50"
-        aria-label="Back to top"
+        aria-label={t(language, 'footer.backToTop')}
       >
         <svg className="w-5 h-5 mx-auto rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7-7m0 0l-7 7m7-7v18" />

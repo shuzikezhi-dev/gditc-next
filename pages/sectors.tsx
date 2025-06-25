@@ -5,6 +5,7 @@ import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getSectors, Sector } from '../lib/strapi'
 import { GetStaticProps } from 'next'
+import { useLanguage } from './_app'
 
 interface SectorsPageProps {
   initialSectors: Sector[]
@@ -12,36 +13,63 @@ interface SectorsPageProps {
 
 export default function Sectors({ initialSectors }: SectorsPageProps) {
   const router = useRouter()
+  const { language, setLanguage } = useLanguage()
   const [sectors, setSectors] = useState<Sector[]>(initialSectors)
   const [activeFilter, setActiveFilter] = useState<string>('Network')
-  const [currentLanguage, setCurrentLanguage] = useState<string>('en')
   const [loading, setLoading] = useState(false)
 
   const sectorTypes = [
-    { id: 'Network', name: 'Network', icon: '🔗' },
-    { id: 'Datacenter', name: 'Datacenter', icon: '🏢' },
-    { id: 'Data', name: 'Data', icon: '📊' },
-    { id: 'Cloud', name: 'Cloud', icon: '☁️' },
-    { id: 'AI', name: 'AI', icon: '🤖' },
-    { id: 'Security', name: 'Security', icon: '🔒' }
+    { 
+      id: 'Network', 
+      name: { en: 'Network', 'zh-Hans': '网络' }, 
+      icon: '🔗' 
+    },
+    { 
+      id: 'Datacenter', 
+      name: { en: 'Datacenter', 'zh-Hans': '数据中心' }, 
+      icon: '🏢' 
+    },
+    { 
+      id: 'Data', 
+      name: { en: 'Data', 'zh-Hans': '数据' }, 
+      icon: '📊' 
+    },
+    { 
+      id: 'Cloud', 
+      name: { en: 'Cloud', 'zh-Hans': '云计算' }, 
+      icon: '☁️' 
+    },
+    { 
+      id: 'AI', 
+      name: { en: 'AI', 'zh-Hans': '人工智能' }, 
+      icon: '🤖' 
+    },
+    { 
+      id: 'Security', 
+      name: { en: 'Security', 'zh-Hans': '安全' }, 
+      icon: '🔒' 
+    }
   ]
 
   // 从URL参数初始化状态
   useEffect(() => {
     if (router.isReady) {
-      const { type, lang } = router.query
+      const { type } = router.query
       const newType = (type as string) || 'Network'
-      const newLang = (lang as string) || 'en'
       
       setActiveFilter(newType)
-      setCurrentLanguage(newLang)
       
       // 如果参数与初始值不同，获取新数据
-      if (newType !== 'Network' || newLang !== 'en') {
-        fetchSectors(newType, newLang)
+      if (newType !== 'Network') {
+        fetchSectors(newType, language)
       }
     }
   }, [router.isReady, router.query])
+
+  // 监听全局语言变化
+  useEffect(() => {
+    fetchSectors(activeFilter, language)
+  }, [language])
 
   // 获取sectors数据的函数
   const fetchSectors = async (type: string, language: string) => {
@@ -58,34 +86,24 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
     }
   }
 
-  // 处理语言切换
-  const handleLanguageChange = (language: string) => {
-    setCurrentLanguage(language)
-    
-    // 更新URL但不刷新页面
-    const newUrl = `/sectors?type=${activeFilter}&lang=${language}`
-    router.push(newUrl, undefined, { shallow: true })
-    
-    // 获取新语言的数据
-    fetchSectors(activeFilter, language)
-  }
+  // 移除这个处理函数，使用全局的语言切换
 
   // 处理类型筛选
   const handleFilterChange = (type: string) => {
     setActiveFilter(type)
     
-    // 更新URL但不刷新页面
-    const newUrl = `/sectors?type=${type}&lang=${currentLanguage}`
+    // 更新URL但不刷新页面，只保存类型参数
+    const newUrl = `/sectors?type=${type}`
     router.push(newUrl, undefined, { shallow: true })
     
     // 获取新类型的数据
-    fetchSectors(type, currentLanguage)
+    fetchSectors(type, language)
   }
 
   // 格式化日期显示
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString(currentLanguage === 'zh-Hans' ? 'zh-CN' : 'en-US', {
+      return new Date(dateString).toLocaleDateString(language === 'zh-Hans' ? 'zh-CN' : 'en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -144,16 +162,22 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
         publicationDesc: '发布最终批准的标准'
       }
     }
-    return texts[currentLanguage as keyof typeof texts]?.[key as keyof typeof texts['en']] || texts['en'][key as keyof typeof texts['en']]
+    return texts[language as keyof typeof texts]?.[key as keyof typeof texts['en']] || texts['en'][key as keyof typeof texts['en']]
+  }
+
+  // 获取当前活跃类型的显示名称
+  const getActiveFilterDisplayName = () => {
+    const activeType = sectorTypes.find(type => type.id === activeFilter)
+    return activeType ? activeType.name[language as keyof typeof activeType.name] || activeType.name.en : activeFilter
   }
 
   return (
     <>
       <SEOHead
-        title={`${activeFilter} ${getText('title')} | DITC`}
-        description={`DITC ${activeFilter} ${getText('description')}`}
+        title={`${getActiveFilterDisplayName()} ${getText('title')} | DITC - Digital Infrastructure Technical Council`}
+        description={`DITC ${getActiveFilterDisplayName()} ${getText('description')}`}
       />
-      <Layout currentLanguage={currentLanguage} onLanguageChange={handleLanguageChange}>
+      <Layout>
         {/* Banner Section */}
         <div className="relative z-10 overflow-hidden pt-[120px] pb-[60px] md:pt-[130px] lg:pt-[160px] dark:bg-dark">
           <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-stroke/0 via-stroke dark:via-dark-3 to-stroke/0"></div>
@@ -162,10 +186,10 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
               <div className="w-full px-4">
                 <div className="text-center">
                   <h1 className="mb-4 text-3xl font-bold text-dark dark:text-white sm:text-4xl md:text-[40px] md:leading-[1.2]">
-                    {activeFilter} {getText('title')}
+                    {getActiveFilterDisplayName()} {getText('title')}
                   </h1>
                   <p className="mb-5 text-base text-body-color dark:text-dark-6">
-                    DITC {activeFilter} {getText('description')}
+                    DITC {getActiveFilterDisplayName()} {getText('description')}
                   </p>
 
                   <ul className="flex items-center justify-center gap-[10px] flex-wrap">
@@ -181,7 +205,7 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
                           }`}
                           disabled={loading}
                         >
-                          {type.name}
+                          {type.name[language as keyof typeof type.name] || type.name.en}
                         </button>
                       </li>
                     ))}
@@ -199,77 +223,71 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
           </div>
         </div>
 
-        {/* Sectors Grid */}
-        <section className="py-20 lg:py-[120px]">
+        {/* Main Content */}
+        <section className="pt-20 pb-10 lg:pt-[120px] lg:pb-20 dark:bg-dark">
           <div className="container mx-auto px-4">
-            {sectors && sectors.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {sectors.map((sector, index) => (
-                  <div
-                    key={sector.artcileId || sector.id || index}
-                    className="group bg-white dark:bg-dark rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-dark-3"
-                  >
-                    <div className="p-8">
-                      <div className="flex items-center justify-between mb-4">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                          sector.type === 'Network' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                          sector.type === 'Datacenter' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          sector.type === 'Data' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-                          sector.type === 'Cloud' ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200' :
-                          sector.type === 'AI' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-                          'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                        }`}>
-                          {sector.type}
-                        </span>
-                        <span className="text-sm text-body-color dark:text-dark-6">
-                          {formatDate(sector.date)}
-                        </span>
+            {loading ? (
+              <div className="text-center py-20">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="mt-4 text-body-color dark:text-dark-6">Loading...</p>
+              </div>
+            ) : sectors.length > 0 ? (
+              <div className="flex flex-wrap -mx-4">
+                {sectors.map((sector, index) => {
+                  // 调试日志
+                  if (sector.cover) {
+                    console.log(`✅ Sector ${index} has cover:`, sector.cover.url);
+                  } else {
+                    console.log(`❌ Sector ${index} missing cover:`, sector.title);
+                  }
+                  
+                  return (
+                  <div key={sector.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
+                    <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
+                      <div className="mb-8 overflow-hidden rounded-[5px]">
+                        <a href={`/sectors/${sector.documentId || sector.id}`} className="block">
+                          <img
+                            src={sector.cover?.url || '/images/blog/blog-01.jpg'}
+                            alt={sector.title}
+                            className="w-full transition group-hover:rotate-6 group-hover:scale-125"
+                            onError={(e) => {
+                              console.log('Image load error for sector:', sector.id, 'cover:', sector.cover);
+                              console.log('Attempted URL:', sector.cover?.url);
+                            }}
+                            onLoad={() => {
+                              if (sector.cover?.url) {
+                                console.log('Image loaded successfully for sector:', sector.id, 'URL:', sector.cover.url);
+                              }
+                            }}
+                          />
+                        </a>
                       </div>
-                      
-                      <h3 className="text-xl font-bold text-dark dark:text-white mb-4 group-hover:text-primary transition-colors">
-                        {sector.title}
-                      </h3>
-                      
-                      {/* 显示描述或内容预览 */}
-                      <p className="text-body-color dark:text-dark-6 mb-6 line-clamp-3">
-                        {sector.descript || extractTextFromContent(sector.content)}
-                      </p>
-
-                      {/* 来源信息 */}
-                      {sector.source && (
-                        <div className="mb-4">
-                          <span className="text-xs text-body-color dark:text-dark-6 bg-gray-100 dark:bg-dark-2 px-2 py-1 rounded">
-                            {getText('source')}: {sector.source}
-                          </span>
-                        </div>
-                      )}
-
-                      {/* 附件信息 */}
-                      {sector.attach?.data && sector.attach.data.length > 0 && (
-                        <div className="mb-4">
-                          <span className="text-xs text-primary bg-primary/10 px-2 py-1 rounded">
-                            📎 {sector.attach.data.length} {getText('attachments')}
-                          </span>
-                        </div>
-                      )}
-                      
-                      <a
-                        href={`/sectors/${currentLanguage}/${sector.id || index}/${sector.artcileId || index}`}
-                        className="inline-flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
-                      >
-                        {getText('learnMore')}
-                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </a>
+                      <div>
+                        <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
+                          {formatDate(sector.publishedAt || sector.date)}
+                        </span>
+                        <h3>
+                          <a
+                            href={`/sectors/${sector.documentId || sector.id}`}
+                            className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                          >
+                            {sector.title}
+                          </a>
+                        </h3>
+                        <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
+                          {extractTextFromContent(sector.descript || sector.content)}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-16">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-2xl font-bold text-dark dark:text-white mb-2">{getText('noSectorsFound')}</h3>
+              <div className="text-center py-20">
+                <h3 className="text-xl font-semibold text-dark dark:text-white mb-4">
+                  {getText('noSectorsFound')}
+                </h3>
                 <p className="text-body-color dark:text-dark-6">
                   {getText('noSectorsDesc')}
                 </p>

@@ -1,121 +1,167 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getNewsroom, Article } from '../lib/strapi'
+import { useLanguage } from './_app'
 
-interface NewsItem {
-  id: number
-  title: string
-  content: string
-  publishedAt: string
-  type: 'press' | 'industry' | 'newsletter'
+interface NewsroomProps {
+  initialArticles: Article[];
+  locale: string;
 }
 
-// 假数据
-const mockNews: NewsItem[] = [
-  {
-    id: 1,
-    title: 'DITC Announces New AI Infrastructure Standards',
-    content: 'Groundbreaking standards for AI computing infrastructure approved by international committee. These standards will help organizations build more reliable and efficient AI systems.',
-    publishedAt: '2024-03-15',
-    type: 'press'
-  },
-  {
-    id: 2,
-    title: 'Global Data Center Efficiency Report Released',
-    content: 'Annual report reveals significant improvements in data center energy efficiency worldwide. The report shows a 15% improvement in power usage effectiveness across major facilities.',
-    publishedAt: '2024-03-10',
-    type: 'industry'
-  },
-  {
-    id: 3,
-    title: 'Monthly Newsletter - March 2024',
-    content: 'Our monthly newsletter featuring the latest updates on digital infrastructure developments, upcoming events, and member spotlights.',
-    publishedAt: '2024-03-01',
-    type: 'newsletter'
-  },
-  {
-    id: 4,
-    title: 'DITC Partners with Leading Tech Companies',
-    content: 'Strategic partnerships formed to advance digital infrastructure standardization efforts. New collaborations will accelerate the development of next-generation standards.',
-    publishedAt: '2024-02-25',
-    type: 'press'
-  },
-  {
-    id: 5,
-    title: 'Industry Survey: Cloud Adoption Trends',
-    content: 'Comprehensive survey reveals accelerating cloud adoption across enterprise sectors. 78% of organizations plan to increase cloud investments in the next year.',
-    publishedAt: '2024-02-20',
-    type: 'industry'
-  }
-]
-
-export default function Newsroom({ articles = mockNews }: { articles?: NewsItem[] }) {
+export default function Newsroom({ initialArticles = [], locale }: NewsroomProps) {
+  const { language } = useLanguage()
+  const [articles, setArticles] = useState<Article[]>(initialArticles)
+  const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('all')
+  const [currentDataLocale, setCurrentDataLocale] = useState(locale)
 
-  const newsTypes = [
-    { id: 'all', name: 'All News', icon: '📰' },
-    { id: 'press', name: 'Press Releases', icon: '📢' },
-    { id: 'industry', name: 'Industry News', icon: '🏭' },
-    { id: 'newsletter', name: 'Newsletter', icon: '📧' }
-  ]
+  // 监听语言变化，获取对应语言的数据
+  useEffect(() => {
+    const fetchNewsroomForLanguage = async () => {
+      if (language === currentDataLocale) return
+      
+      setLoading(true)
+      try {
+        console.log(`🔄 语言切换为 ${language}，重新获取Newsroom数据...`)
+        const response = await fetch(`/api/newsroom?locale=${language}`)
+        if (response.ok) {
+          const newArticles = await response.json()
+          setArticles(newArticles)
+          setCurrentDataLocale(language)
+          console.log(`✅ 成功获取 ${newArticles.length} 条Newsroom数据`)
+        } else {
+          console.error('❌ 获取Newsroom数据失败')
+        }
+      } catch (error) {
+        console.error('❌ 获取Newsroom数据时出错:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-  const filteredNews = articles?.filter(item => 
-    filter === 'all' || item.type === filter
-  ) || []
+    fetchNewsroomForLanguage()
+  }, [language, currentDataLocale])
+
+  const getPageTitle = () => {
+    return language === 'zh-Hans' ? '新闻中心' : 'Newsroom'
+  }
+
+  const getPageDescription = () => {
+    return language === 'zh-Hans' 
+      ? '了解DITC最新资讯和行业动态' 
+      : 'Stay updated with the latest news and industry insights from DITC'
+  }
+
+  const getFilterLabel = (filterType: string) => {
+    if (language === 'zh-Hans') {
+      switch (filterType) {
+        case 'all': return '全部新闻'
+        case 'press-release': return '新闻稿'
+        case 'industry-news': return '行业动态'
+        case 'announcement': return '公告通知'
+        default: return filterType
+      }
+    } else {
+      switch (filterType) {
+        case 'all': return 'All News'
+        case 'press-release': return 'Press Releases'
+        case 'industry-news': return 'Industry News'
+        case 'announcement': return 'Announcements'
+        default: return filterType
+      }
+    }
+  }
+
+  const getReadMoreText = () => {
+    return language === 'zh-Hans' ? '阅读更多' : 'Read More'
+  }
+
+  const getEmptyStateText = () => {
+    if (language === 'zh-Hans') {
+      return {
+        title: '暂无新闻',
+        description: '请稍后查看最新资讯更新。'
+      }
+    } else {
+      return {
+        title: 'No news found',
+        description: 'Please check back later for the latest updates.'
+      }
+    }
+  }
+
+  // 筛选文章
+  const filteredArticles = filter === 'all' 
+    ? articles 
+    : articles.filter(article => article.category?.slug === filter)
 
   return (
     <>
       <SEOHead
-        title="Newsroom | DITC"
-        description="Latest news, press releases and industry updates from DITC"
+        title={`${getPageTitle()} | DITC`}
+        description={getPageDescription()}
       />
       <Layout>
         {/* Banner */}
         <div className="relative z-10 overflow-hidden pt-[120px] pb-[60px] md:pt-[130px] lg:pt-[160px] dark:bg-dark">
+          <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-stroke/0 via-stroke dark:via-dark-3 to-stroke/0"></div>
           <div className="container mx-auto px-4">
             <div className="text-center">
               <h1 className="mb-4 text-3xl font-bold text-dark dark:text-white sm:text-4xl md:text-[40px] md:leading-[1.2]">
-                Newsroom
+                {getPageTitle()}
               </h1>
               <ul className="flex items-center justify-center gap-[10px] flex-wrap">
                 <li>
                   <button
-                    onClick={() => setFilter('press')}
+                    onClick={() => setFilter('all')}
                     className={`text-base font-medium transition-colors ${
-                      filter === 'press' 
+                      filter === 'all' 
                         ? 'text-dark dark:text-white' 
                         : 'text-body-color dark:text-dark-6 hover:text-primary'
                     }`}
                   >
-                    Press Releases
+                    {getFilterLabel('all')}
                   </button>
                 </li>
                 <li className="flex items-center">
                   <span className="text-body-color dark:text-dark-6 mr-[10px]"> / </span>
                   <button
-                    onClick={() => setFilter('industry')}
+                    onClick={() => setFilter('press-release')}
                     className={`text-base font-medium transition-colors ${
-                      filter === 'industry' 
+                      filter === 'press-release' 
                         ? 'text-dark dark:text-white' 
                         : 'text-body-color dark:text-dark-6 hover:text-primary'
                     }`}
                   >
-                    Industry News
+                    {getFilterLabel('press-release')}
                   </button>
                 </li>
                 <li className="flex items-center">
                   <span className="text-body-color dark:text-dark-6 mr-[10px]"> / </span>
                   <button
-                    onClick={() => setFilter('newsletter')}
+                    onClick={() => setFilter('industry-news')}
                     className={`text-base font-medium transition-colors ${
-                      filter === 'newsletter' 
+                      filter === 'industry-news' 
                         ? 'text-dark dark:text-white' 
                         : 'text-body-color dark:text-dark-6 hover:text-primary'
                     }`}
                   >
-                    Newsletter
+                    {getFilterLabel('industry-news')}
+                  </button>
+                </li>
+                <li className="flex items-center">
+                  <span className="text-body-color dark:text-dark-6 mr-[10px]"> / </span>
+                  <button
+                    onClick={() => setFilter('announcement')}
+                    className={`text-base font-medium transition-colors ${
+                      filter === 'announcement' 
+                        ? 'text-dark dark:text-white' 
+                        : 'text-body-color dark:text-dark-6 hover:text-primary'
+                    }`}
+                  >
+                    {getFilterLabel('announcement')}
                   </button>
                 </li>
               </ul>
@@ -123,64 +169,76 @@ export default function Newsroom({ articles = mockNews }: { articles?: NewsItem[
           </div>
         </div>
 
-        {/* Filter */}
-        {/* <section className="py-16 bg-gray-50 dark:bg-dark-2">
-          <div className="container mx-auto px-4">
-            <div className="flex flex-wrap justify-center gap-4">
-              {newsTypes.map((type) => (
-                <button
-                  key={type.id}
-                  onClick={() => setFilter(type.id)}
-                  className={`px-6 py-3 rounded-full flex items-center gap-2 transition-all duration-300 ${
-                    filter === type.id
-                      ? 'bg-primary text-white shadow-lg'
-                      : 'bg-white dark:bg-dark text-body-color dark:text-white hover:bg-primary/10 border border-gray-200 dark:border-dark-3'
-                  }`}
-                >
-                  <span>{type.icon}</span>
-                  <span className="font-medium">{type.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section> */}
-
         {/* News List */}
-        <section className="py-20 lg:py-[120px]">
+        <section className="pt-20 pb-10 lg:pt-[120px] lg:pb-20 dark:bg-dark">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              {filteredNews.map((item) => (
-                <div key={item.id} className="bg-white dark:bg-dark rounded-lg shadow-lg border border-gray-200 dark:border-dark-3 p-8 mb-8 hover:shadow-xl transition-all duration-300">
-                  <div className="flex items-start justify-between mb-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      item.type === 'press' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                      item.type === 'industry' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                      'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
-                    }`}>
-                      {item.type === 'press' ? 'Press Release' : item.type === 'industry' ? 'Industry News' : 'Newsletter'}
-                    </span>
-                    <span className="text-sm text-body-color dark:text-dark-6">
-                      {new Date(item.publishedAt).toLocaleDateString()}
-                    </span>
+            {loading && (
+              <div className="text-center py-20">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="mt-4 text-body-color dark:text-dark-6">
+                  {language === 'zh-Hans' ? '加载中...' : 'Loading...'}
+                </p>
+              </div>
+            )}
+
+            {!loading && filteredArticles.length > 0 && (
+              <div className="flex flex-wrap -mx-4">
+                {filteredArticles.map((article, index) => (
+                  <div key={article.documentId || index} className="w-full px-4 md:w-1/2 lg:w-1/3">
+                    <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
+                      <div className="mb-8 overflow-hidden rounded-[5px]">
+                        <a href={`/newsroom/${article.documentId || article.slug || `article-${index}`}`} className="block">
+                          <img
+                            src={article.cover?.url || '/images/blog/blog-01.jpg'}
+                            alt={article.cover?.alternativeText || article.title}
+                            className="w-full transition group-hover:rotate-6 group-hover:scale-125"
+                            onError={(e) => {
+                              console.log('Newsroom image load error:', article.documentId, 'cover:', article.cover);
+                            }}
+                            onLoad={() => {
+                              if (article.cover?.url) {
+                                console.log('Newsroom image loaded successfully:', article.documentId, 'URL:', article.cover.url);
+                              }
+                            }}
+                          />
+                        </a>
+                      </div>
+                      <div>
+                        <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
+                          {new Date(article.publishedAt).toLocaleDateString(
+                            language === 'zh-Hans' ? 'zh-CN' : 'en-US'
+                          )}
+                        </span>
+                        <h3>
+                          <a
+                            href={`/newsroom/${article.documentId || article.slug || `article-${index}`}`}
+                            className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                          >
+                            {article.title}
+                          </a>
+                        </h3>
+                        <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
+                          {article.description || (article.content && article.content.length > 150 
+                            ? `${article.content.substring(0, 150)}...` 
+                            : article.content)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  
-                  <h3 className="text-2xl font-bold text-dark dark:text-white mb-4">
-                    {item.title}
-                  </h3>
-                  
-                  <p className="text-body-color dark:text-dark-6 mb-6 line-clamp-3">
-                    {item.content}
-                  </p>
-                  
-                  <a href={`/newsroom/${item.id}`} className="inline-flex items-center text-primary hover:text-primary/80 font-medium">
-                    Read More
-                    <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </a>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {!loading && filteredArticles.length === 0 && (
+              <div className="text-center py-20">
+                <h3 className="text-xl font-semibold text-dark dark:text-white mb-4">
+                  {getEmptyStateText().title}
+                </h3>
+                <p className="text-body-color dark:text-dark-6">
+                  {getEmptyStateText().description}
+                </p>
+              </div>
+            )}
           </div>
         </section>
       </Layout>
@@ -188,20 +246,32 @@ export default function Newsroom({ articles = mockNews }: { articles?: NewsItem[
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale = 'en' }) => {
   try {
-    const articles = await getNewsroom()
+    console.log(`🔄 正在为 ${locale} 生成Newsroom静态页面...`)
+    
+    const articles = await getNewsroom(undefined, locale)
+    
+    // 清理undefined值，防止序列化错误
+    const serializedArticles = JSON.parse(JSON.stringify(articles || []))
+    
+    console.log(`✅ 成功为 ${locale} 获取 ${serializedArticles.length} 条Newsroom数据`)
+    
     return {
       props: {
-        articles: articles || []
-      }
+        initialArticles: serializedArticles,
+        locale,
+      },
+      revalidate: serializedArticles.length > 0 ? 3600 : 60,
     }
   } catch (error) {
-    console.error('Error fetching newsroom data:', error)
+    console.error(`❌ 为 ${locale} 生成Newsroom静态页面失败:`, error)
     return {
       props: {
-        articles: []
-      }
+        initialArticles: [],
+        locale,
+      },
+      revalidate: 60,
     }
   }
 } 
