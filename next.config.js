@@ -1,7 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'export',
   trailingSlash: true,
-  distDir: 'dist',
+  distDir: 'out',
   images: {
     unoptimized: true,
     domains: [
@@ -14,11 +15,12 @@ const nextConfig = {
     STRAPI_API_TOKEN: process.env.STRAPI_API_TOKEN,
     NEXT_PUBLIC_CDN_URL: 'https://cdn.gditc.org'
   },
-  i18n: {
-    locales: ['en', 'zh-Hans'],
-    defaultLocale: 'en',
-    localeDetection: false,
-  },
+  // 静态导出模式下不支持i18n，需要手动实现
+  // i18n: {
+  //   locales: ['en', 'zh-Hans'],
+  //   defaultLocale: 'en',
+  //   localeDetection: false,
+  // },
 }
 
 module.exports = nextConfig 

@@ -281,8 +281,7 @@ export const getStaticProps: GetStaticProps<NewsroomPageProps> = async ({ locale
           en: cleanedArticlesEn,
           'zh-Hans': cleanedArticlesZh
         }
-      },
-      revalidate: 3600 // 每小时重新生成
+      }
     }
   } catch (error) {
     console.error('❌ 预生成Newsroom页面数据失败:', error)
@@ -293,8 +292,7 @@ export const getStaticProps: GetStaticProps<NewsroomPageProps> = async ({ locale
           en: [],
           'zh-Hans': []
         }
-      },
-      revalidate: 3600
+      }
     }
   }
 } 

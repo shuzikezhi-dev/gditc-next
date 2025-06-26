@@ -278,8 +278,7 @@ export const getStaticProps: GetStaticProps<EventsPageProps> = async ({ locale }
           en: formatEvents(eventsEn),
           'zh-Hans': formatEvents(eventsZh)
         }
-      },
-      revalidate: 3600 // 每小时重新生成
+      }
     }
   } catch (error) {
     console.error('Error in getStaticProps for events page:', error)
@@ -290,8 +289,7 @@ export const getStaticProps: GetStaticProps<EventsPageProps> = async ({ locale }
           en: [],
           'zh-Hans': []
         }
-      },
-      revalidate: 3600
+      }
     }
   }
 } 

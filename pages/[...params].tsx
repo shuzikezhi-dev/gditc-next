@@ -465,6 +465,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     
     // 为每个内容类型和语言获取记录来生成路径
     for (const channelType of validChannels) {
+      // 创建语言特定的路径
       for (const locale of locales) {
         try {
           console.log(`📋 获取${channelType}的${locale}路径...`);
@@ -472,9 +473,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
           const content = await getContentList(channelType, locale, 20);
           content.forEach(item => {
             if (item.documentId) {
+              // 添加语言前缀到路径中
               paths.push({ 
-                params: { params: [channelType, item.documentId] },
-                locale: locale
+                params: { params: [locale, channelType, item.documentId] }
               });
             }
           });
@@ -484,13 +485,28 @@ export const getStaticPaths: GetStaticPaths = async () => {
           console.log(`❌ 获取${channelType}-${locale}失败:`, error);
         }
       }
+      
+      // 同时为无语言前缀的路径生成（默认英文）
+      try {
+        const content = await getContentList(channelType, 'en', 20);
+        content.forEach(item => {
+          if (item.documentId) {
+            paths.push({ 
+              params: { params: [channelType, item.documentId] }
+            });
+          }
+        });
+      } catch (error) {
+        console.log(`❌ 获取${channelType}默认路径失败:`, error);
+      }
     }
     
     // 如果没有任何路径，至少添加一些示例路径
     if (paths.length === 0) {
       paths.push(
-        { params: { params: ['sectors', 'sample-doc-id'] }, locale: 'en' },
-        { params: { params: ['sectors', 'sample-doc-id'] }, locale: 'zh-Hans' }
+        { params: { params: ['sectors', 'sample-doc-id'] } },
+        { params: { params: ['en', 'sectors', 'sample-doc-id'] } },
+        { params: { params: ['zh-Hans', 'sectors', 'sample-doc-id'] } }
       );
     }
     
@@ -505,26 +521,36 @@ export const getStaticPaths: GetStaticPaths = async () => {
     
     return {
       paths: [
-        { params: { params: ['sectors', 'wt9v3cvkbqgpp4z2cj902ect'] }, locale: 'en' },
-        { params: { params: ['sectors', 'wt9v3cvkbqgpp4z2cj902ect'] }, locale: 'zh-Hans' },
+        { params: { params: ['sectors', 'wt9v3cvkbqgpp4z2cj902ect'] } },
+        { params: { params: ['en', 'sectors', 'wt9v3cvkbqgpp4z2cj902ect'] } },
+        { params: { params: ['zh-Hans', 'sectors', 'wt9v3cvkbqgpp4z2cj902ect'] } },
       ],
       fallback: 'blocking',
     };
   }
 };
 
-export const getStaticProps: GetStaticProps<DetailPageProps> = async ({ params, locale }) => {
+export const getStaticProps: GetStaticProps<DetailPageProps> = async ({ params }) => {
   try {
     const pathParams = params?.params as string[];
 
-    // 路由格式: /{channel}/{documentId}
-    if (!pathParams || pathParams.length !== 2) {
+    // 路由格式支持: /{channel}/{documentId} 或 /{locale}/{channel}/{documentId}
+    let channelType: string;
+    let documentId: string;
+    let requestedLocale: string;
+
+    if (pathParams?.length === 2) {
+      // 格式: /{channel}/{documentId} - 默认英文
+      [channelType, documentId] = pathParams;
+      requestedLocale = 'en';
+    } else if (pathParams?.length === 3) {
+      // 格式: /{locale}/{channel}/{documentId}
+      [requestedLocale, channelType, documentId] = pathParams;
+    } else {
       return {
         notFound: true,
       };
     }
-
-    const [channelType, documentId] = pathParams;
 
     // 验证channelType
     const validChannels = ['articles', 'sectors', 'events', 'resources', 'newsroom'];
@@ -534,8 +560,11 @@ export const getStaticProps: GetStaticProps<DetailPageProps> = async ({ params, 
       };
     }
 
-    // 确定语言，优先使用locale参数
-    const requestedLocale = locale || 'en';
+    // 验证locale
+    const validLocales = ['en', 'zh-Hans'];
+    if (!validLocales.includes(requestedLocale)) {
+      requestedLocale = 'en'; // 默认英文
+    }
     console.log(`🌐 请求的语言: ${requestedLocale}, 内容类型: ${channelType}, documentId: ${documentId}`);
 
     // 首先尝试获取英文内容
@@ -591,8 +620,7 @@ export const getStaticProps: GetStaticProps<DetailPageProps> = async ({ params, 
           cover: content.cover?.url || null,
         },
         relatedContentData
-      },
-      revalidate: 3600 // 每小时重新生成
+      }
     };
   } catch (error) {
     console.error('Error in getStaticProps:', error);

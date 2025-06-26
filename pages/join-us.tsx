@@ -233,8 +233,7 @@ export const getStaticProps: GetStaticProps<JoinUsProps> = async ({ locale }) =>
     return {
       props: {
         translations
-      },
-      revalidate: 3600 // 每小时重新生成
+      }
     };
   } catch (error) {
     console.error('❌ 预生成Join Us页面数据失败:', error);
@@ -245,8 +244,7 @@ export const getStaticProps: GetStaticProps<JoinUsProps> = async ({ locale }) =>
           'en': getTranslation('en'),
           'zh-Hans': getTranslation('zh-Hans')
         }
-      },
-      revalidate: 3600
+      }
     };
   }
 } 

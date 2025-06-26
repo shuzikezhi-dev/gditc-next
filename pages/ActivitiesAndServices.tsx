@@ -195,8 +195,7 @@ export const getStaticProps: GetStaticProps<ActivitiesAndServicesProps> = async 
     return {
       props: {
         activitiesData
-      },
-      revalidate: 3600 // 每小时重新生成
+      }
     };
   } catch (error) {
     console.error('❌ 获取Activities & Services数据失败:', error);
@@ -207,8 +206,7 @@ export const getStaticProps: GetStaticProps<ActivitiesAndServicesProps> = async 
           'en': [],
           'zh-Hans': []
         }
-      },
-      revalidate: 3600
+      }
     };
   }
 }; 

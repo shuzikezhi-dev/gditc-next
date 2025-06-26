@@ -504,8 +504,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
           en: aboutData,
           'zh-Hans': aboutData
         }
-      },
-      revalidate: 3600 // 每小时重新生成
+      }
     }
   } catch (error) {
     console.error('Error in getStaticProps for about page:', error)
@@ -516,8 +515,7 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
           en: null,
           'zh-Hans': null
         }
-      },
-      revalidate: 3600
+      }
     }
   }
 } 

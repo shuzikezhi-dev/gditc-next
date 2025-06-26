@@ -18,22 +18,47 @@ export const useLanguage = () => useContext(LanguageContext);
 
 export default function App({ Component, pageProps }: AppProps) {
   const router = useRouter();
-  const [language, setLanguage] = useState(router.locale || 'en');
+  const [language, setLanguage] = useState(() => {
+    // 从路径中提取语言
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      if (pathname.startsWith('/zh-Hans')) return 'zh-Hans';
+      if (pathname.startsWith('/en')) return 'en';
+    }
+    return 'en';
+  });
 
   // 监听路由变化，同步语言设置
   useEffect(() => {
-    if (router.locale && router.locale !== language) {
-      setLanguage(router.locale);
+    const pathname = router.pathname;
+    if (pathname.startsWith('/zh-Hans')) {
+      setLanguage('zh-Hans');
+    } else if (pathname.startsWith('/en')) {
+      setLanguage('en');
+    } else {
+      setLanguage('en');
     }
-  }, [router.locale]);
+  }, [router.pathname]);
 
   // 语言切换处理函数
   const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage);
     
-    // 使用Next.js的路由推送来切换语言
-    const { pathname, asPath, query } = router;
-    router.push({ pathname, query }, asPath, { locale: newLanguage });
+    // 手动处理语言路由切换
+    const currentPath = router.asPath;
+    let newPath = currentPath;
+    
+    // 移除当前语言前缀
+    if (currentPath.startsWith('/zh-Hans')) {
+      newPath = currentPath.replace('/zh-Hans', '');
+    } else if (currentPath.startsWith('/en')) {
+      newPath = currentPath.replace('/en', '');
+    }
+    
+    // 添加新语言前缀
+    newPath = `/${newLanguage}${newPath}`;
+    
+    router.push(newPath);
   };
 
   return (

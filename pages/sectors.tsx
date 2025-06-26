@@ -8,15 +8,20 @@ import { GetStaticProps } from 'next'
 import { useLanguage } from './_app'
 
 interface SectorsPageProps {
-  sectors: Sector[]
-  currentType: string
+  sectorsData: {
+    en: Sector[];
+    'zh-Hans': Sector[];
+  };
 }
 
-export default function Sectors({ sectors: initialSectors, currentType }: SectorsPageProps) {
+export default function Sectors({ sectorsData }: SectorsPageProps) {
   const router = useRouter()
   const { language } = useLanguage()
-  const [sectors, setSectors] = useState<Sector[]>(initialSectors)
-  const [activeFilter, setActiveFilter] = useState<string>(currentType)
+  // 根据当前语言获取对应的sectors数据
+  const currentSectors = sectorsData[language as keyof typeof sectorsData] || sectorsData.en || [];
+  
+  const [sectors, setSectors] = useState<Sector[]>(currentSectors)
+  const [activeFilter, setActiveFilter] = useState<string>('Network')
   const [loading, setLoading] = useState(false)
 
   const sectorTypes = [
@@ -304,32 +309,34 @@ export default function Sectors({ sectors: initialSectors, currentType }: Sector
 // 注意：静态路由 /sectors 不需要 getStaticPaths 函数
 // getStaticPaths 只用于动态路由（如 [id].tsx）
 
-export const getStaticProps: GetStaticProps<SectorsPageProps> = async ({ locale, params }) => {
+export const getStaticProps: GetStaticProps<SectorsPageProps> = async () => {
   try {
-    // 从URL params获取type，如果没有则默认为Network
-    const type = 'Network' // 暂时固定为Network，因为我们使用查询参数处理类型切换
-    const language = locale || 'en'
-    
-    console.log(`SSG: Generating page for type: ${type}, locale: ${language}`)
-    
-    const sectors = await getSectors(type, language)
+    // 默认获取所有数据，客户端根据需要筛选
+    const [enSectors, zhSectors] = await Promise.all([
+      getSectors(undefined, 'en'),
+      getSectors(undefined, 'zh-Hans')
+    ]);
+
+    console.log(`SSG: Generating sectors page with data`);
     
     return {
       props: {
-        sectors: sectors || [],
-        currentType: type
-      },
-      revalidate: 3600 // 每小时重新生成
+        sectorsData: {
+          en: enSectors || [],
+          'zh-Hans': zhSectors || []
+        }
+      }
     }
   } catch (error) {
     console.error('Error fetching sectors:', error)
     
     return {
       props: {
-        sectors: [],
-        currentType: 'Network'
-      },
-      revalidate: 3600
+        sectorsData: {
+          en: [],
+          'zh-Hans': []
+        }
+      }
     }
   }
 } 
