@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { convertToCDN } from '../lib/cdn-utils';
 
 interface OptimizedImageProps {
   src: string;
@@ -7,6 +8,7 @@ interface OptimizedImageProps {
   height: number;
   className?: string;
   priority?: boolean;
+  quality?: number;
 }
 
 export default function OptimizedImage({ 
@@ -15,22 +17,29 @@ export default function OptimizedImage({
   width, 
   height, 
   className = '',
-  priority = false 
+  priority = false,
+  quality = 85
 }: OptimizedImageProps) {
   const strapiURL = process.env.NEXT_PUBLIC_STRAPI_API_URL?.replace('/api', '');
   
-  // 如果src已经是完整URL，直接使用；否则拼接Strapi base URL
-  const imageSrc = src.startsWith('http') ? src : `${strapiURL}${src}`;
+  // 处理图片URL：先拼接完整URL，再转换为CDN
+  let imageSrc = src;
+  if (!src.startsWith('http')) {
+    imageSrc = `${strapiURL}${src}`;
+  }
+  
+  // 转换为CDN URL
+  const cdnImageSrc = convertToCDN(imageSrc);
 
   return (
     <Image
-      src={imageSrc}
+      src={cdnImageSrc}
       alt={alt}
       width={width}
       height={height}
       className={className}
       priority={priority}
-      quality={85}
+      quality={quality}
       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
     />
   );

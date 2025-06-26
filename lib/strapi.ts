@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { processMediaUrls } from './cdn-utils';
 
 const strapiAPI = axios.create({
   baseURL: process.env.NEXT_PUBLIC_STRAPI_API_URL || 'https://wonderful-serenity-47deffe3a2.strapiapp.com/api',
@@ -26,9 +27,14 @@ strapiAPI.interceptors.request.use((config) => {
   return config;
 });
 
-// 添加响应拦截器来处理错误
+// 添加响应拦截器：自动处理图片URL转换为CDN
 strapiAPI.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.data) {
+      response.data = processMediaUrls(response.data);
+    }
+    return response;
+  },
   (error) => {
     console.error('Strapi API Error:', {
       url: error.config?.url,

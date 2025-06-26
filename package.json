@@ -9,7 +9,8 @@
     "export": "next build",
     "lint": "next lint",
     "setup": "node scripts/setup.js",
-    "sitemap": "node scripts/generate-sitemap.js"
+    "sitemap": "node scripts/generate-sitemap.js",
+    "test:cdn": "node scripts/test-cdn.js"
   },
   "dependencies": {
     "@tailwindcss/line-clamp": "^0.4.4",
