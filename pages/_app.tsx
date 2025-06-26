@@ -1,5 +1,6 @@
 import type { AppProps } from 'next/app';
 import { useState, useEffect, createContext, useContext } from 'react';
+import { useRouter } from 'next/router';
 import '../styles/globals.css';
 
 // 创建语言上下文
@@ -16,21 +17,23 @@ const LanguageContext = createContext<LanguageContextType>({
 export const useLanguage = () => useContext(LanguageContext);
 
 export default function App({ Component, pageProps }: AppProps) {
-  const [language, setLanguage] = useState('en');
+  const router = useRouter();
+  const [language, setLanguage] = useState(router.locale || 'en');
 
-  // 初始化语言设置
+  // 监听路由变化，同步语言设置
   useEffect(() => {
-    // 从localStorage获取保存的语言设置
-    const savedLanguage = localStorage.getItem('language');
-    if (savedLanguage) {
-      setLanguage(savedLanguage);
+    if (router.locale && router.locale !== language) {
+      setLanguage(router.locale);
     }
-  }, []);
+  }, [router.locale]);
 
   // 语言切换处理函数
   const handleLanguageChange = (newLanguage: string) => {
     setLanguage(newLanguage);
-    localStorage.setItem('language', newLanguage);
+    
+    // 使用Next.js的路由推送来切换语言
+    const { pathname, asPath, query } = router;
+    router.push({ pathname, query }, asPath, { locale: newLanguage });
   };
 
   return (

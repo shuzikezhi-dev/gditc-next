@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
+import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getEvents, Event as StrapiEvent } from '../lib/strapi'
@@ -9,62 +10,37 @@ import { useLanguage } from './_app'
 // 本地Event接口，用于组件内部
 interface Event {
   id: number;
-  documentId?: string;
+  documentId: string | null;
   title: string;
   date: string;
   content: string;
-  location?: string;
-  type?: string;
-  cover?: {
+  location: string | null;
+  type: string | null;
+  cover: {
     url: string;
-    alternativeText?: string;
-  };
+    alternativeText: string | null;
+  } | null;
 }
 
-export default function Events() {
+interface EventsPageProps {
+  events: {
+    en: Event[]
+    'zh-Hans': Event[]
+  }
+}
+
+export default function Events({ events: initialEvents }: EventsPageProps) {
   const router = useRouter()
-  const { language, setLanguage } = useLanguage()
-  const [events, setEvents] = useState<Event[]>([])
+  const { language } = useLanguage()
+  const [events, setEvents] = useState<Event[]>(initialEvents[language as keyof typeof initialEvents] || initialEvents.en || [])
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('all')
 
-  // 监听全局语言变化
+  // 监听全局语言变化时更新数据
   useEffect(() => {
-    fetchEvents(language)
-  }, [language])
-
-  // 获取events数据的函数
-  const fetchEvents = async (language: string) => {
-    setLoading(true)
-    try {
-      console.log(`🔄 获取Events数据 (${language})...`)
-      
-      const eventsData = await getEvents(undefined, language)
-      
-      // 转换数据格式以匹配本地Event接口
-      const formattedEvents: Event[] = eventsData.map((event: StrapiEvent, index: number) => ({
-        id: event.id || index + 1,
-        documentId: event.documentId,
-        title: event.title,
-        date: event.date,
-        content: event.content,
-        location: event.location,
-        type: event.type,
-        cover: event.cover ? {
-          url: event.cover.url,
-          alternativeText: event.cover.alternativeText
-        } : undefined
-      }))
-      
-      console.log(`✅ 成功获取 ${formattedEvents.length} 条Events数据`)
-      setEvents(formattedEvents)
-    } catch (error) {
-      console.error('❌ 获取Events数据失败:', error)
-      setEvents([])
-    } finally {
-      setLoading(false)
-    }
-  }
+    const currentLanguageEvents = initialEvents[language as keyof typeof initialEvents] || initialEvents.en || []
+    setEvents(currentLanguageEvents)
+  }, [language, initialEvents])
 
   const upcomingEvents = events?.filter(event => new Date(event.date) > new Date()) || []
   const pastEvents = events?.filter(event => new Date(event.date) <= new Date()) || []
@@ -232,23 +208,19 @@ export default function Events() {
                         </a>
                       </div>
                       <div>
-                        <span className={`inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] ${
-                          new Date(event.date) > new Date() ? 'bg-primary' : 'bg-gray-400'
-                        }`}>
+                        <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
                           {formatDate(event.date)}
                         </span>
                         <h3>
                           <a
                             href={`/events/${event.documentId || event.id}`}
-                            className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                            className={`inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title ${language === 'zh-Hans' ? 'zh' : 'en'}`}
                           >
                             {event.title}
                           </a>
                         </h3>
-                        <p className="max-w-[370px] text-base text-body-color dark:text-dark-6 mb-4">
-                          {event.content && event.content.length > 150 
-                            ? `${event.content.substring(0, 150)}...` 
-                            : event.content}
+                        <p className={`max-w-[370px] text-base text-body-color dark:text-dark-6 mb-4 article-description ${language === 'zh-Hans' ? 'zh' : 'en'}`}>
+                          {event.content}
                         </p>
                         {event.location && (
                           <p className="text-sm text-body-color dark:text-dark-6 mb-2">
@@ -273,6 +245,53 @@ export default function Events() {
           </div>
         </section>
       </Layout>
-    </>
-  )
+          </>
+    )
+  }
+
+export const getStaticProps: GetStaticProps<EventsPageProps> = async ({ locale }) => {
+  try {
+    // 为每种语言获取events数据
+    const [eventsEn, eventsZh] = await Promise.all([
+      getEvents(undefined, 'en'),
+      getEvents(undefined, 'zh-Hans')
+    ]);
+
+    // 转换数据格式，确保没有undefined值
+    const formatEvents = (events: StrapiEvent[]) => events.map((event: StrapiEvent, index: number) => ({
+      id: event.id || index + 1,
+      documentId: event.documentId || null,
+      title: event.title,
+      date: event.date,
+      content: event.content || '',
+      location: event.location || null,
+      type: event.type || null,
+      cover: event.cover ? {
+        url: event.cover.url,
+        alternativeText: event.cover.alternativeText || null
+      } : null
+    }));
+
+    return {
+      props: {
+        events: {
+          en: formatEvents(eventsEn),
+          'zh-Hans': formatEvents(eventsZh)
+        }
+      },
+      revalidate: 3600 // 每小时重新生成
+    }
+  } catch (error) {
+    console.error('Error in getStaticProps for events page:', error)
+    
+    return {
+      props: {
+        events: {
+          en: [],
+          'zh-Hans': []
+        }
+      },
+      revalidate: 3600
+    }
+  }
 } 

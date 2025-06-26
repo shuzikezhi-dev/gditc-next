@@ -17,84 +17,63 @@ interface DetailPageProps {
     createdAt: string;
     cover?: string | null;
   };
+  relatedContentData?: { [key: string]: DetailContent[] };
 }
 
-export default function DetailPage({ channelType, documentId, initialContent }: DetailPageProps) {
+export default function DetailPage({ 
+  channelType, 
+  documentId, 
+  initialContent,
+  relatedContentData = {}
+}: DetailPageProps) {
   const router = useRouter();
   const { language } = useLanguage();
   const [content, setContent] = useState(initialContent);
-  const [relatedArticles, setRelatedArticles] = useState<DetailContent[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 当语言切换时，重新获取对应语言的内容
+  // 获取相关文章
+  const currentLocale = language === 'zh-Hans' ? 'zh-Hans' : 'en';
+  const relatedArticles = relatedContentData[currentLocale] || relatedContentData['en'] || [];
+
+  // 语言切换时重新获取内容
   useEffect(() => {
-    const fetchContentForLanguage = async () => {
-      if (language !== content.locale) {
-        setLoading(true);
+    if (content.locale !== currentLocale) {
+      setLoading(true);
+      
+      const fetchContentForLanguage = async () => {
         try {
-          const targetLocale = language === 'zh-Hans' ? 'zh-Hans' : 'en';
-          const newContent = await getDetailContent(channelType, documentId, targetLocale);
-          
+          const newContent = await getDetailContent(channelType, documentId, currentLocale);
           if (newContent) {
             setContent({
-              title: newContent.title,
-              description: newContent.description || newContent.descript || '',
-              content: newContent.content || '',
-              locale: newContent.locale,
-              createdAt: newContent.createdAt,
-              cover: newContent.cover?.url || null,
+              title: newContent.title || content.title,
+              description: newContent.description || newContent.descript || content.description,
+              content: newContent.content || content.content,
+              locale: newContent.locale || currentLocale,
+              createdAt: newContent.createdAt || content.createdAt,
+              cover: newContent.cover?.url || content.cover,
             });
           }
         } catch (error) {
-          console.error('Failed to fetch content for language:', error);
+          console.error('Error fetching content for language:', error);
+          // 如果获取失败，保持当前内容但更新语言标识
+          setContent(prev => ({ ...prev, locale: currentLocale }));
         } finally {
           setLoading(false);
         }
-      }
-    };
+      };
 
-    fetchContentForLanguage();
-  }, [language, channelType, documentId]);
+      fetchContentForLanguage();
+    }
+  }, [currentLocale, channelType, documentId, content.locale, content.title, content.description, content.content, content.createdAt, content.cover]);
 
-  // 获取相关文章
+  // 路由变化时重置内容
   useEffect(() => {
-    const fetchRelatedArticles = async () => {
-      try {
-        const articles = await getContentList(channelType, language === 'zh-Hans' ? 'zh-Hans' : 'en', 4);
-        setRelatedArticles(articles.filter(item => item.documentId !== documentId));
-      } catch (error) {
-        console.error('Failed to fetch related articles:', error);
-      }
-    };
-
-    fetchRelatedArticles();
-  }, [channelType, language, documentId]);
-
-  if (!content) {
-    return (
-      <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-dark dark:text-white mb-4">
-              {language === 'zh-Hans' ? '内容未找到' : 'Content Not Found'}
-            </h1>
-            <p className="text-lg text-body-color dark:text-dark-6 mb-8">
-              {language === 'zh-Hans' ? '抱歉，您查找的内容不存在。' : 'Sorry, the content you\'re looking for doesn\'t exist.'}
-            </p>
-            <button
-              onClick={() => router.back()}
-              className="bg-primary text-white px-6 py-3 rounded-md hover:bg-primary/90 transition duration-300"
-            >
-              {language === 'zh-Hans' ? '返回' : 'Go Back'}
-            </button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+    setContent(initialContent);
+  }, [channelType, documentId, initialContent]);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString(language === 'zh-Hans' ? 'zh-CN' : 'en-US', {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(language === 'zh-Hans' ? 'zh-CN' : 'en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -102,25 +81,25 @@ export default function DetailPage({ channelType, documentId, initialContent }: 
   };
 
   const getChannelDisplayName = (channel: string) => {
-    const channelNames = {
+    const channelNames: { [key: string]: { [key: string]: string } } = {
       'zh-Hans': {
-        sectors: '行业板块',
-        articles: '文章',
-        events: '活动',
-        resources: '资源',
-        newsroom: '新闻'
-      } as { [key: string]: string },
+        'sectors': '行业板块',
+        'events': '活动',
+        'resources': '资源',
+        'newsroom': '新闻中心',
+        'articles': '文章'
+      },
       'en': {
-        sectors: 'Sectors',
-        articles: 'Articles', 
-        events: 'Events',
-        resources: 'Resources',
-        newsroom: 'Newsroom'
-      } as { [key: string]: string }
+        'sectors': 'Sectors',
+        'events': 'Events', 
+        'resources': 'Resources',
+        'newsroom': 'Newsroom',
+        'articles': 'Articles'
+      }
     };
     
     const locale = language === 'zh-Hans' ? 'zh-Hans' : 'en';
-    return channelNames[locale][channel] || channel;
+    return channelNames[locale]?.[channel] || channel;
   };
 
   return (
@@ -162,18 +141,25 @@ export default function DetailPage({ channelType, documentId, initialContent }: 
                   <li>
                     <a
                       href="/"
-                      className="flex items-center gap-[10px] text-base font-medium text-dark dark:text-white"
+                      className="flex items-center gap-[10px] text-base font-medium text-body-color dark:text-dark-6 hover:text-primary transition-colors"
                     >
                       {language === 'zh-Hans' ? '首页' : 'Home'}
                     </a>
                   </li>
                   <li>
                     <span className="text-body-color dark:text-dark-6"> / </span>
-                    <span className="capitalize">{getChannelDisplayName(channelType)}</span>
+                    <a 
+                      href={`/${channelType}`}
+                      className="capitalize text-body-color dark:text-dark-6 hover:text-primary transition-colors"
+                    >
+                      {getChannelDisplayName(channelType)}
+                    </a>
                   </li>
                   <li>
                     <span className="text-body-color dark:text-dark-6"> / </span>
-                    {language === 'zh-Hans' ? '详情' : 'Details'}
+                    <span className="text-dark dark:text-white font-medium">
+                      {language === 'zh-Hans' ? '详情' : 'Details'}
+                    </span>
                   </li>
                 </ul>
               </div>
@@ -182,36 +168,86 @@ export default function DetailPage({ channelType, documentId, initialContent }: 
         </div>
       </div>
 
-      {/* Content Section */}
-      <section className="pb-10 pt-10 dark:bg-dark lg:pb-20 lg:pt-[60px]">
+      {/* Featured Image - 符合版心宽度，高度自适应 */}
+      {content.cover && (
+        <div className="container mx-auto px-4 mb-[50px]">
+          <div className="wow fadeInUp relative z-20 overflow-hidden rounded-[5px]" data-wow-delay=".1s">
+            <img
+              src={content.cover}
+              alt={content.title}
+              className="w-full h-auto object-cover object-center"
+            />
+            {/* 图片上的覆盖层和元信息 */}
+            <div className="absolute top-0 left-0 z-10 flex items-end w-full h-full bg-gradient-to-t from-dark/70 to-transparent">
+              <div className="flex flex-wrap items-center p-4 pb-4 sm:px-8">
+                <div className="flex items-center mb-4 mr-5 md:mr-10">
+                  <p className="text-base font-medium text-white">
+                    {language === 'zh-Hans' ? '发布时间：' : 'Published: '}
+                    <span className="text-white/90">
+                      {formatDate(content.createdAt)}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex items-center mb-4">
+                  <p className="flex items-center mr-5 text-sm font-medium text-white md:mr-6">
+                    <span className="mr-3">
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 16 16">
+                        <path d="M11.1002 4.875H4.6502C4.3502 4.875 4.0752 5.125 4.0752 5.45C4.0752 5.775 4.3252 6.025 4.6502 6.025H11.1252C11.4252 6.025 11.7002 5.775 11.7002 5.45C11.7002 5.125 11.4252 4.875 11.1002 4.875Z"/>
+                        <path d="M9.8002 7.92505H4.6502C4.3502 7.92505 4.0752 8.17505 4.0752 8.50005C4.0752 8.82505 4.3252 9.07505 4.6502 9.07505H9.8002C10.1002 9.07505 10.3752 8.82505 10.3752 8.50005C10.3752 8.17505 10.1002 7.92505 9.8002 7.92505Z"/>
+                      </svg>
+                    </span>
+                    {getChannelDisplayName(channelType)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Content Section - paddingTop为0 */}
+      <section className="pb-10 pt-0 dark:bg-dark lg:pb-20 lg:pt-0">
         <div className="container mx-auto px-4">
           <div className="flex flex-wrap justify-center -mx-4">
             <div className="w-full px-4 lg:w-8/12">
               <div>
-                {/* Featured Image */}
-                {content.cover && (
-                  <div className="wow fadeInUp relative z-20 mb-[50px] h-[300px] overflow-hidden rounded-[5px] md:h-[400px] lg:h-[500px]" data-wow-delay=".1s">
-                    <img
-                      src={content.cover}
-                      alt={content.title}
-                      className="object-cover object-center w-full h-full"
-                    />
+                {/* Article Title - 添加文章标题到图片下方 */}
+                <div className="wow fadeInUp mb-8" data-wow-delay=".1s">
+                  <h1 className="mb-4 text-2xl font-bold text-dark dark:text-white sm:text-3xl md:text-[35px] md:leading-[1.28]">
+                    {content.title}
+                  </h1>
+                  
+                  {/* Meta info under title */}
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-body-color dark:text-dark-6">
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                      </svg>
+                      {formatDate(content.createdAt)}
+                    </span>
+                    
+                    <span className="flex items-center gap-2">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M17.707 9.293a1 1 0 010 1.414l-7 7a1 1 0 01-1.414 0l-7-7A.997.997 0 012 10V5a3 3 0 013-3h5c.256 0 .512.098.707.293l7 7zM5 6a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      </svg>
+                      {getChannelDisplayName(channelType)}
+                    </span>
                   </div>
-                )}
+                </div>
 
-                <h2 className="wow fadeInUp mb-8 text-2xl font-bold text-dark dark:text-white sm:text-3xl md:text-[35px] md:leading-[1.28]" data-wow-delay=".1s">
-                  {content.title}
-                </h2>
-
-                <p className="mb-6 text-base wow fadeInUp text-body-color dark:text-dark-6" data-wow-delay=".1s">
+                <p className="mb-6 text-base wow fadeInUp text-body-color dark:text-dark-6 text-justify" data-wow-delay=".1s">
                   {content.description}
                 </p>
 
-                <div className="prose prose-lg max-w-none dark:prose-invert mb-10 wow fadeInUp" data-wow-delay=".1s">
+                <div className="prose prose-lg max-w-none dark:prose-invert mb-10 wow fadeInUp text-justify" data-wow-delay=".1s" style={{ textAlign: 'justify' }}>
                   {content.content ? (
-                    <div dangerouslySetInnerHTML={{ __html: content.content }} />
+                    <div 
+                      dangerouslySetInnerHTML={{ __html: content.content }} 
+                      className="text-justify"
+                      style={{ textAlign: 'justify', lineHeight: '1.7' }}
+                    />
                   ) : (
-                    <p className="text-body-color dark:text-dark-6">
+                    <p className="text-body-color dark:text-dark-6 text-justify">
                       {language === 'zh-Hans' ? '暂无内容' : 'No content available'}
                     </p>
                   )}
@@ -317,16 +353,16 @@ export default function DetailPage({ channelType, documentId, initialContent }: 
                         </div>
                         <div className="w-full">
                           <h4>
-                            <a
-                              href={`/${channelType}/${article.documentId}`}
-                              className="inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg"
-                            >
-                              {article.title.length > 40 ? `${article.title.substring(0, 40)}…` : article.title}
-                            </a>
-                          </h4>
-                          <p className="text-sm text-body-color dark:text-dark-6">
-                            {formatDate(article.createdAt)}
-                          </p>
+                                                          <a
+                                href={`/${channelType}/${article.documentId}`}
+                                className={`inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg article-title ${language === 'zh-Hans' ? 'zh' : 'en'}`}
+                              >
+                                {article.title}
+                              </a>
+                            </h4>
+                            <p className={`text-sm text-body-color dark:text-dark-6 article-description ${language === 'zh-Hans' ? 'zh' : 'en'}`}>
+                              {article.description || article.descript || formatDate(article.createdAt)}
+                            </p>
                         </div>
                       </div>
                     </div>
@@ -348,85 +384,13 @@ export default function DetailPage({ channelType, documentId, initialContent }: 
                             <h4>
                               <a
                                 href="javascript:void(0)"
-                                className="inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg"
+                                className={`inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg article-title ${language === 'zh-Hans' ? 'zh' : 'en'}`}
                               >
                                 {language === 'zh-Hans' ? '创建引人入胜的在线课程…' : 'Create engaging online courses your student…'}
                               </a>
                             </h4>
-                            <p className="text-sm text-body-color dark:text-dark-6">
+                            <p className={`text-sm text-body-color dark:text-dark-6 article-description ${language === 'zh-Hans' ? 'zh' : 'en'}`}>
                               {language === 'zh-Hans' ? 'DITC 团队' : 'DITC Team'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-full">
-                        <div className="flex items-center w-full pb-5 mb-5 border-b wow fadeInUp border-stroke dark:border-dark-3" data-wow-delay=".1s">
-                          <div className="mr-5 h-20 w-full max-w-[80px] overflow-hidden rounded-full">
-                            <img
-                              src="/images/blog/article-author-02.png"
-                              alt="image"
-                              className="w-full"
-                            />
-                          </div>
-                          <div className="w-full">
-                            <h4>
-                              <a
-                                href="javascript:void(0)"
-                                className="inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg"
-                              >
-                                {language === 'zh-Hans' ? '数字基础设施标准化最佳实践' : 'The ultimate formula for digital infrastructure'}
-                              </a>
-                            </h4>
-                            <p className="text-sm text-body-color dark:text-dark-6">
-                              {language === 'zh-Hans' ? 'DITC 专家' : 'DITC Expert'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-full">
-                        <div className="flex items-center w-full pb-5 mb-5 border-b wow fadeInUp border-stroke dark:border-dark-3" data-wow-delay=".1s">
-                          <div className="mr-5 h-20 w-full max-w-[80px] overflow-hidden rounded-full">
-                            <img
-                              src="/images/blog/article-author-03.png"
-                              alt="image"
-                              className="w-full"
-                            />
-                          </div>
-                          <div className="w-full">
-                            <h4>
-                              <a
-                                href="javascript:void(0)"
-                                className="inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg"
-                              >
-                                {language === 'zh-Hans' ? '50个最佳数字化转型技巧' : '50 Best digital transformation tips & tricks'}
-                              </a>
-                            </h4>
-                            <p className="text-sm text-body-color dark:text-dark-6">
-                              {language === 'zh-Hans' ? 'DITC 顾问' : 'DITC Consultant'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="w-full">
-                        <div className="flex items-center w-full pb-5 mb-5 border-0 wow fadeInUp border-stroke dark:border-dark-3" data-wow-delay=".1s">
-                          <div className="mr-5 h-20 w-full max-w-[80px] overflow-hidden rounded-full">
-                            <img
-                              src="/images/blog/article-author-04.png"
-                              alt="image"
-                              className="w-full"
-                            />
-                          </div>
-                          <div className="w-full">
-                            <h4>
-                              <a
-                                href="javascript:void(0)"
-                                className="inline-block mb-1 text-lg font-medium leading-snug text-dark hover:text-primary dark:text-dark-6 dark:hover:text-primary lg:text-base xl:text-lg"
-                              >
-                                {language === 'zh-Hans' ? '8个最佳基础设施建设方案' : 'The 8 best infrastructure builders, reviewed'}
-                              </a>
-                            </h4>
-                            <p className="text-sm text-body-color dark:text-dark-6">
-                              {language === 'zh-Hans' ? 'DITC 研究员' : 'DITC Researcher'}
                             </p>
                           </div>
                         </div>
@@ -434,73 +398,60 @@ export default function DetailPage({ channelType, documentId, initialContent }: 
                     </>
                   )}
                 </div>
-
-                {/* Banner Ad */}
-                <div className="wow fadeInUp mb-12 overflow-hidden rounded-[5px]" data-wow-delay=".1s">
-                  <img
-                    src="/images/blog/bannder-ad.png"
-                    alt="image"
-                    className="w-full h-auto"
-                  />
-                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Related Articles Section */}
-        {relatedArticles.length > 0 && (
-          <div className="container mx-auto px-4">
-            <div className="flex flex-wrap -mx-4">
-              <div className="w-full px-4 wow fadeInUp mt-14" data-wow-delay=".2s">
-                <h2 className="relative pb-5 text-2xl font-semibold text-dark dark:text-white sm:text-[36px]">
-                  {language === 'zh-Hans' ? '相关文章' : 'Related Articles'}
-                </h2>
-                <span className="mb-10 inline-block h-[2px] w-20 bg-primary"></span>
-              </div>
-              
-              {relatedArticles.slice(0, 3).map((article, index) => (
-                <div key={article.documentId} className="w-full px-4 md:w-1/2 lg:w-1/3">
-                  <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${1 + index}s`}>
-                    <div className="mb-8 overflow-hidden rounded-[5px]">
-                      <a href={`/${channelType}/${article.documentId}`} className="block">
-                        {article.cover?.url ? (
-                          <img
-                            src={article.cover.url}
-                            alt={article.title}
-                            className="w-full h-48 object-cover transition group-hover:rotate-6 group-hover:scale-125"
-                          />
-                        ) : (
-                          <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center transition group-hover:rotate-6 group-hover:scale-125">
-                            <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
+          {/* Related Articles Section */}
+          <div className="flex flex-wrap -mx-4">
+            <div className="w-full px-4 wow fadeInUp mt-14" data-wow-delay=".2s">
+              <h2 className="relative pb-5 text-2xl font-semibold text-dark dark:text-white sm:text-[36px]">
+                {language === 'zh-Hans' ? '相关文章' : 'Related Articles'}
+              </h2>
+              <span className="mb-10 inline-block h-[2px] w-20 bg-primary"></span>
+            </div>
+            
+            {relatedArticles.slice(0, 3).map((article, index) => (
+              <div key={article.documentId} className="w-full px-4 md:w-1/2 lg:w-1/3">
+                <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${1 + index}s`}>
+                  <div className="mb-8 overflow-hidden rounded-[5px]">
+                    <a href={`/${channelType}/${article.documentId}`} className="block">
+                      {article.cover?.url ? (
+                        <img
+                          src={article.cover.url}
+                          alt={article.title}
+                          className="w-full h-48 object-cover transition group-hover:rotate-6 group-hover:scale-125"
+                        />
+                      ) : (
+                        <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 flex items-center justify-center transition group-hover:rotate-6 group-hover:scale-125">
+                          <svg className="w-16 h-16 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                      )}
+                    </a>
+                  </div>
+                  <div>
+                    <span className="mb-6 inline-block rounded-[5px] bg-primary px-4 py-0.5 text-center text-xs font-medium leading-loose text-white">
+                      {formatDate(article.createdAt)}
+                    </span>
+                    <h3>
+                      <a
+                        href={`/${channelType}/${article.documentId}`}
+                        className={`inline-block mb-4 text-xl font-semibold text-dark hover:text-primary dark:text-white sm:text-2xl lg:text-xl xl:text-2xl article-title ${language === 'zh-Hans' ? 'zh' : 'en'}`}
+                      >
+                        {article.title}
                       </a>
-                    </div>
-                    <div>
-                      <span className="mb-6 inline-block rounded-[5px] bg-primary px-4 py-0.5 text-center text-xs font-medium leading-loose text-white">
-                        {formatDate(article.createdAt)}
-                      </span>
-                      <h3>
-                        <a
-                          href={`/${channelType}/${article.documentId}`}
-                          className="inline-block mb-4 text-xl font-semibold text-dark hover:text-primary dark:text-white sm:text-2xl lg:text-xl xl:text-2xl"
-                        >
-                          {article.title}
-                        </a>
-                      </h3>
-                      <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
-                        {article.description || article.descript || ''}
-                      </p>
-                    </div>
+                    </h3>
+                    <p className={`max-w-[370px] text-base text-body-color dark:text-dark-6 article-description ${language === 'zh-Hans' ? 'zh' : 'en'}`}>
+                      {article.description || article.descript || ''}
+                    </p>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
-        )}
+        </div>
       </section>
     </Layout>
   );
@@ -510,68 +461,59 @@ export const getStaticPaths: GetStaticPaths = async () => {
   try {
     const paths: any[] = [];
     const validChannels = ['articles', 'sectors', 'events', 'resources', 'newsroom'];
+    const locales = ['en', 'zh-Hans'];
     
-    // 为每个内容类型获取记录来生成路径
+    // 为每个内容类型和语言获取记录来生成路径
     for (const channelType of validChannels) {
-      try {
-        console.log(`📋 获取${channelType}的路径...`);
-        
-        // 获取英文内容
-        const enContent = await getContentList(channelType, 'en', 20);
-        enContent.forEach(item => {
-          if (item.documentId) {
-            paths.push({ params: { params: [channelType, item.documentId] } });
-          }
-        });
-        
-        // 获取中文内容
-        const zhContent = await getContentList(channelType, 'zh-Hans', 20);
-        zhContent.forEach(item => {
-          if (item.documentId) {
-            // 避免重复添加相同的documentId
-            const exists = paths.some(p => 
-              p.params.params[0] === channelType && 
-              p.params.params[1] === item.documentId
-            );
-            if (!exists) {
-              paths.push({ params: { params: [channelType, item.documentId] } });
+      for (const locale of locales) {
+        try {
+          console.log(`📋 获取${channelType}的${locale}路径...`);
+          
+          const content = await getContentList(channelType, locale, 20);
+          content.forEach(item => {
+            if (item.documentId) {
+              paths.push({ 
+                params: { params: [channelType, item.documentId] },
+                locale: locale
+              });
             }
-          }
-        });
-        
-        console.log(`✅ ${channelType}: 生成了 ${paths.filter(p => p.params.params[0] === channelType).length} 个路径`);
-      } catch (error) {
-        console.log(`❌ 获取${channelType}失败:`, error);
-        // 如果API调用失败，至少添加一个示例路径
-        if (channelType === 'sectors') {
-          paths.push({ params: { params: [channelType, 'wt9v3cvkbqgpp4z2cj902ect'] } });
+          });
+          
+          console.log(`✅ ${channelType}-${locale}: 生成了 ${content.length} 个路径`);
+        } catch (error) {
+          console.log(`❌ 获取${channelType}-${locale}失败:`, error);
         }
       }
+    }
+    
+    // 如果没有任何路径，至少添加一些示例路径
+    if (paths.length === 0) {
+      paths.push(
+        { params: { params: ['sectors', 'sample-doc-id'] }, locale: 'en' },
+        { params: { params: ['sectors', 'sample-doc-id'] }, locale: 'zh-Hans' }
+      );
     }
     
     console.log(`🚀 总共生成了 ${paths.length} 个静态路径`);
     
     return {
       paths,
-      // 静态导出模式下必须使用 fallback: false
-      fallback: false,
+      fallback: 'blocking', // 允许新内容的增量生成
     };
   } catch (error) {
     console.error('Error in getStaticPaths:', error);
     
-    // 如果API调用失败，返回基本的示例路径，包括我们知道存在的documentId
-          return {
-        paths: [
-          { params: { params: ['sectors', 'wt9v3cvkbqgpp4z2cj902ect'] } }, // 使用真实的documentId
-          { params: { params: ['sectors', 'sample-sector-doc-id'] } },
-          { params: { params: ['articles', 'sample-article-doc-id'] } },
-        ],
-        fallback: false,
-      };
+    return {
+      paths: [
+        { params: { params: ['sectors', 'wt9v3cvkbqgpp4z2cj902ect'] }, locale: 'en' },
+        { params: { params: ['sectors', 'wt9v3cvkbqgpp4z2cj902ect'] }, locale: 'zh-Hans' },
+      ],
+      fallback: 'blocking',
+    };
   }
 };
 
-export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
+export const getStaticProps: GetStaticProps<DetailPageProps> = async ({ params, locale }) => {
   try {
     const pathParams = params?.params as string[];
 
@@ -592,7 +534,7 @@ export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
       };
     }
 
-    // 确定语言，优先使用locale参数，然后是查询参数
+    // 确定语言，优先使用locale参数
     const requestedLocale = locale || 'en';
     console.log(`🌐 请求的语言: ${requestedLocale}, 内容类型: ${channelType}, documentId: ${documentId}`);
 
@@ -615,9 +557,28 @@ export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
       };
     }
 
+    // 并行获取相关内容数据
+    const relatedContentData: { [key: string]: DetailContent[] } = {}
+    const locales = ['en', 'zh-Hans']
+    
+    const relatedDataPromises = locales.map(async (lang) => {
+      try {
+        const articles = await getContentList(channelType, lang, 6);
+        return { lang, articles };
+      } catch (error) {
+        console.error(`❌ 获取${lang}语言相关内容失败:`, error);
+        return { lang, articles: [] };
+      }
+    });
+    
+    const relatedResults = await Promise.all(relatedDataPromises);
+    relatedResults.forEach(({ lang, articles }) => {
+      relatedContentData[lang] = articles;
+    });
+
     console.log(`✅ 成功获取内容: ${content.title} (${content.locale})`);
 
-              return {
+    return {
       props: {
         channelType,
         documentId,
@@ -629,7 +590,9 @@ export const getStaticProps: GetStaticProps = async ({ params, locale }) => {
           createdAt: content.createdAt || new Date().toISOString(),
           cover: content.cover?.url || null,
         },
+        relatedContentData
       },
+      revalidate: 3600 // 每小时重新生成
     };
   } catch (error) {
     console.error('Error in getStaticProps:', error);

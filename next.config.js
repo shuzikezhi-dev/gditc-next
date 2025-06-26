@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   trailingSlash: true,
   distDir: 'dist',
   images: {
@@ -10,7 +9,12 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_STRAPI_API_URL: process.env.NEXT_PUBLIC_STRAPI_API_URL,
     STRAPI_API_TOKEN: process.env.STRAPI_API_TOKEN,
-  }
+  },
+  i18n: {
+    locales: ['en', 'zh-Hans'],
+    defaultLocale: 'en',
+    localeDetection: false,
+  },
 }
 
 module.exports = nextConfig 

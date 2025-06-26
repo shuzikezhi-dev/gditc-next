@@ -1,10 +1,16 @@
 import { useState } from 'react'
+import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { t, getTranslation } from '../lib/translations'
 import { useLanguage } from './_app'
 
-export default function JoinUs() {
+interface JoinUsProps {
+  // 预生成的翻译数据
+  translations?: any;
+}
+
+export default function JoinUs({ translations = {} }: JoinUsProps) {
   const { language } = useLanguage()
   
   const [formData, setFormData] = useState({
@@ -16,57 +22,57 @@ export default function JoinUs() {
   })
 
   const getApplicationSteps = () => {
-    const translations = getTranslation(language)
+    const currentTranslations = translations[language] || translations['en'] || getTranslation(language)
     return [
       {
         step: 1,
-        title: translations.joinUs.steps.step1.title,
-        description: translations.joinUs.steps.step1.description,
-        items: translations.joinUs.steps.step1.items
+        title: currentTranslations.joinUs.steps.step1.title,
+        description: currentTranslations.joinUs.steps.step1.description,
+        items: currentTranslations.joinUs.steps.step1.items
       },
       {
         step: 2,
-        title: translations.joinUs.steps.step2.title,
-        description: translations.joinUs.steps.step2.description,
-        items: translations.joinUs.steps.step2.items
+        title: currentTranslations.joinUs.steps.step2.title,
+        description: currentTranslations.joinUs.steps.step2.description,
+        items: currentTranslations.joinUs.steps.step2.items
       },
       {
         step: 3,
-        title: translations.joinUs.steps.step3.title,
-        description: translations.joinUs.steps.step3.description,
-        items: translations.joinUs.steps.step3.items
+        title: currentTranslations.joinUs.steps.step3.title,
+        description: currentTranslations.joinUs.steps.step3.description,
+        items: currentTranslations.joinUs.steps.step3.items
       },
       {
         step: 4,
-        title: translations.joinUs.steps.step4.title,
-        description: translations.joinUs.steps.step4.description,
-        items: translations.joinUs.steps.step4.items
+        title: currentTranslations.joinUs.steps.step4.title,
+        description: currentTranslations.joinUs.steps.step4.description,
+        items: currentTranslations.joinUs.steps.step4.items
       }
     ]
   }
 
   const getMembershipTypes = () => {
-    const translations = getTranslation(language)
+    const currentTranslations = translations[language] || translations['en'] || getTranslation(language)
     return [
       {
         type: 'core',
-        title: translations.joinUs.membershipTypes.core.title,
-        description: translations.joinUs.membershipTypes.core.description,
-        features: translations.joinUs.membershipTypes.core.features,
+        title: currentTranslations.joinUs.membershipTypes.core.title,
+        description: currentTranslations.joinUs.membershipTypes.core.description,
+        features: currentTranslations.joinUs.membershipTypes.core.features,
         highlight: false
       },
       {
         type: 'sme',
-        title: translations.joinUs.membershipTypes.sme.title,
-        description: translations.joinUs.membershipTypes.sme.description,
-        features: translations.joinUs.membershipTypes.sme.features,
+        title: currentTranslations.joinUs.membershipTypes.sme.title,
+        description: currentTranslations.joinUs.membershipTypes.sme.description,
+        features: currentTranslations.joinUs.membershipTypes.sme.features,
         highlight: false
       },
       {
         type: 'government',
-        title: translations.joinUs.membershipTypes.government.title,
-        description: translations.joinUs.membershipTypes.government.description,
-        features: translations.joinUs.membershipTypes.government.features,
+        title: currentTranslations.joinUs.membershipTypes.government.title,
+        description: currentTranslations.joinUs.membershipTypes.government.description,
+        features: currentTranslations.joinUs.membershipTypes.government.features,
         highlight: false
       }
     ]
@@ -140,7 +146,7 @@ export default function JoinUs() {
                       {step.description}
                     </p>
                     <ul className="text-sm text-body-color dark:text-dark-6 space-y-2">
-                      {step.items.map((item, itemIndex) => (
+                      {step.items.map((item: string, itemIndex: number) => (
                         <li key={itemIndex} className="flex items-start justify-start">
                           <svg className="w-4 h-4 text-primary mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -191,7 +197,7 @@ export default function JoinUs() {
                   </div>
 
                   <ul className="space-y-3 mb-8">
-                    {membership.features.map((feature, featureIndex) => (
+                    {membership.features.map((feature: string, featureIndex: number) => (
                       <li key={featureIndex} className="flex items-start">
                         <svg className="w-5 h-5 text-green-500 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
@@ -208,4 +214,39 @@ export default function JoinUs() {
       </Layout>
     </>
   )
+}
+
+export const getStaticProps: GetStaticProps<JoinUsProps> = async ({ locale }) => {
+  try {
+    console.log('🔄 正在预生成Join Us页面数据...');
+    
+    // 预生成所有语言的翻译数据
+    const translations: { [key: string]: any } = {}
+    const locales = ['en', 'zh-Hans']
+    
+    locales.forEach(lang => {
+      translations[lang] = getTranslation(lang)
+    })
+
+    console.log(`✅ 成功预生成Join Us页面翻译数据`);
+
+    return {
+      props: {
+        translations
+      },
+      revalidate: 3600 // 每小时重新生成
+    };
+  } catch (error) {
+    console.error('❌ 预生成Join Us页面数据失败:', error);
+    
+    return {
+      props: {
+        translations: {
+          'en': getTranslation('en'),
+          'zh-Hans': getTranslation('zh-Hans')
+        }
+      },
+      revalidate: 3600
+    };
+  }
 } 

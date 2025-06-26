@@ -493,20 +493,31 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
   )
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   try {
-    const aboutData = await getAbout()
+    // About页面使用静态翻译，不需要从Strapi获取多语言数据
+    const aboutData = await getAbout();
+
     return {
       props: {
-        aboutData: aboutData || null
-      }
+        aboutData: {
+          en: aboutData,
+          'zh-Hans': aboutData
+        }
+      },
+      revalidate: 3600 // 每小时重新生成
     }
   } catch (error) {
-    console.error('Error fetching about data:', error)
+    console.error('Error in getStaticProps for about page:', error)
+    
     return {
       props: {
-        aboutData: null
-      }
+        aboutData: {
+          en: null,
+          'zh-Hans': null
+        }
+      },
+      revalidate: 3600
     }
   }
 } 

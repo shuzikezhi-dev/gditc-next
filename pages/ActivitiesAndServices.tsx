@@ -25,13 +25,17 @@ interface Activity {
 }
 
 interface ActivitiesAndServicesProps {
-  activities: Activity[];
-  locale: string;
+  activitiesData?: { [key: string]: Activity[] };
 }
 
-export default function ActivitiesAndServices({ activities = [], locale }: ActivitiesAndServicesProps) {
+export default function ActivitiesAndServices({ activitiesData = {} }: ActivitiesAndServicesProps) {
   const { language } = useLanguage()
   const [activeCategory, setActiveCategory] = useState('all')
+
+  // 获取当前语言的活动数据，增加安全检查
+  const activities = (activitiesData && activitiesData[language]) || 
+                    (activitiesData && activitiesData['en']) || 
+                    []
 
   const categories = [
     { id: 'all', label: t(language, 'activities.categories.all') },
@@ -114,16 +118,13 @@ export default function ActivitiesAndServices({ activities = [], locale }: Activ
                         <h3>
                           <a
                             href={`/activities-services/${activity.documentId}`}
-                            className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                            className={`inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title ${language === 'zh-Hans' ? 'zh' : 'en'}`}
                           >
                             {activity.title}
                           </a>
                         </h3>
-                        <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
-                          {activity.description.length > 150 
-                            ? `${activity.description.substring(0, 150)}...` 
-                            : activity.description
-                          }
+                        <p className={`max-w-[370px] text-base text-body-color dark:text-dark-6 article-description ${language === 'zh-Hans' ? 'zh' : 'en'}`}>
+                          {activity.description}
                         </p>
                       </div>
                     </div>
@@ -152,57 +153,62 @@ export default function ActivitiesAndServices({ activities = [], locale }: Activ
   )
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale = 'en' }) => {
+export const getStaticProps: GetStaticProps<ActivitiesAndServicesProps> = async ({ locale }) => {
   try {
     console.log('🔄 正在获取Activities & Services数据...');
     
-    // 检查是否在导出模式
-    const isExportMode = process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-export';
+    const activitiesData: { [key: string]: Activity[] } = {}
+    const locales = ['en', 'zh-Hans']
     
-    if (isExportMode) {
-      console.log('📦 检测到导出模式，使用默认数据');
-      return {
-        props: {
-          activities: [],
-          locale: locale === 'zh-Hans' ? 'zh-Hans' : 'en'
-        }
-      };
-    }
+    // 并行获取所有语言的数据
+    const dataPromises = locales.map(async (lang) => {
+      try {
+        const data = await getContentList('activities-and-services', lang);
+        const activities: Activity[] = data.map((item: DetailContent, index: number) => ({
+          id: item.id || index + 1,
+          documentId: item.documentId,
+          category: item.type || 'standardization',
+          title: item.title,
+          description: item.description || item.descript || '',
+          content: item.content,
+          image: item.cover?.url,
+          date: item.publishedAt || item.createdAt,
+          status: 'ongoing' as const,
+          locale: item.locale,
+          cover: item.cover
+        }));
+        return { lang, activities };
+      } catch (error) {
+        console.error(`❌ 获取${lang}语言Activities & Services数据失败:`, error);
+        return { lang, activities: [] };
+      }
+    });
     
-    // 获取activities-and-service数据
-    const activitiesData = await getContentList('activities-and-services', locale === 'zh-Hans' ? 'zh-Hans' : 'en');
-    
-    // 转换数据格式
-    const activities: Activity[] = activitiesData.map((item: DetailContent, index: number) => ({
-      id: item.id || index + 1,
-      documentId: item.documentId,
-      category: item.type || 'standardization', // 从type字段获取分类
-      title: item.title,
-      description: item.description || item.descript || '',
-      content: item.content,
-      image: item.cover?.url,
-      date: item.publishedAt || item.createdAt,
-      status: 'ongoing' as const,
-      locale: item.locale,
-      cover: item.cover
-    }));
+    const results = await Promise.all(dataPromises);
+    results.forEach(({ lang, activities }) => {
+      activitiesData[lang] = activities;
+    });
 
-    console.log(`✅ 成功获取 ${activities.length} 条Activities & Services数据`);
+    const totalActivities = Object.values(activitiesData).reduce((sum, activities) => sum + activities.length, 0);
+    console.log(`✅ 成功获取 ${totalActivities} 条Activities & Services数据`);
 
     return {
       props: {
-        activities,
-        locale: locale === 'zh-Hans' ? 'zh-Hans' : 'en'
-      }
+        activitiesData
+      },
+      revalidate: 3600 // 每小时重新生成
     };
   } catch (error) {
     console.error('❌ 获取Activities & Services数据失败:', error);
     
     return {
       props: {
-        activities: [],
-        locale: locale === 'zh-Hans' ? 'zh-Hans' : 'en'
-      }
+        activitiesData: {
+          'en': [],
+          'zh-Hans': []
+        }
+      },
+      revalidate: 3600
     };
   }
 }; 

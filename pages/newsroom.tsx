@@ -1,40 +1,31 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
+import { GetStaticProps } from 'next'
 import Link from 'next/link'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { getNewsroom, Article } from '../lib/strapi'
 import { useLanguage } from './_app'
 
-export default function Newsroom() {
+interface NewsroomPageProps {
+  articles: {
+    en: Article[]
+    'zh-Hans': Article[]
+  }
+}
+
+export default function Newsroom({ articles: initialArticles }: NewsroomPageProps) {
   const router = useRouter()
-  const { language, setLanguage } = useLanguage()
-  const [articles, setArticles] = useState<Article[]>([])
+  const { language } = useLanguage()
+  const [articles, setArticles] = useState<Article[]>(initialArticles[language as keyof typeof initialArticles] || initialArticles.en || [])
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState('all')
 
-  // 监听全局语言变化
+  // 监听全局语言变化时更新数据
   useEffect(() => {
-    fetchNewsroom(language)
-  }, [language])
-
-  // 获取newsroom数据的函数
-  const fetchNewsroom = async (language: string) => {
-    setLoading(true)
-    try {
-      console.log(`🔄 获取Newsroom数据 (${language})...`)
-      
-      const newsData = await getNewsroom(undefined, language)
-      
-      console.log(`✅ 成功获取 ${newsData.length} 条Newsroom数据`)
-      setArticles(newsData)
-    } catch (error) {
-      console.error('❌ 获取Newsroom数据失败:', error)
-      setArticles([])
-    } finally {
-      setLoading(false)
-    }
-  }
+    const currentLanguageArticles = initialArticles[language as keyof typeof initialArticles] || initialArticles.en || []
+    setArticles(currentLanguageArticles)
+  }, [language, initialArticles])
 
   // 获取本地化文本
   const getText = (key: string) => {
@@ -198,7 +189,7 @@ export default function Newsroom() {
                     <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
                       <div className="mb-8 overflow-hidden rounded-[5px]">
                         <Link href={`/newsroom/${article.documentId}`} className="block">
-                          {article.cover && (
+                          {article.cover && article.cover.url && (
                             <img
                               src={article.cover.url}
                               alt={article.cover.alternativeText || article.title}
@@ -211,7 +202,7 @@ export default function Newsroom() {
                         <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
                           {formatDate(article.publishedAt)}
                         </span>
-                        {article.category && (
+                        {article.category && article.category.name && (
                           <span className="inline-block px-3 py-1 mb-4 ml-2 text-xs font-medium text-primary border border-primary rounded-full">
                             {article.category.name}
                           </span>
@@ -219,12 +210,12 @@ export default function Newsroom() {
                         <h3>
                           <Link
                             href={`/newsroom/${article.documentId}`}
-                            className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                            className={`inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title ${language === 'zh-Hans' ? 'zh' : 'en'}`}
                           >
                             {article.title}
                           </Link>
                         </h3>
-                        <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
+                        <p className={`max-w-[370px] text-base text-body-color dark:text-dark-6 article-description ${language === 'zh-Hans' ? 'zh' : 'en'}`}>
                           {extractTextFromContent(article.description || article.descript || article.content || '')}
                         </p>
                       </div>
@@ -245,6 +236,65 @@ export default function Newsroom() {
           </div>
         </section>
       </Layout>
-    </>
-  )
+          </>
+    )
+  }
+
+export const getStaticProps: GetStaticProps<NewsroomPageProps> = async ({ locale }) => {
+  try {
+    console.log('🔄 正在预生成Newsroom页面数据...');
+    
+    // 为每种语言获取newsroom数据
+    const [articlesEn, articlesZh] = await Promise.all([
+      getNewsroom(undefined, 'en'),
+      getNewsroom(undefined, 'zh-Hans')
+    ]);
+
+    // 清理数据，确保没有undefined值
+    const cleanArticles = (articles: Article[]): Article[] => {
+      return articles.map(article => ({
+        documentId: article.documentId || `article-${Date.now()}`,
+        title: article.title || '',
+        slug: article.slug || '',
+        description: article.description || '',
+        descript: article.descript || '',
+        content: article.content || '',
+        cover: article.cover || null,
+        author: article.author || null,
+        category: article.category || null,
+        blocks: article.blocks || null,
+        locale: article.locale || 'en',
+        createdAt: article.createdAt || new Date().toISOString(),
+        updatedAt: article.updatedAt || new Date().toISOString(),
+        publishedAt: article.publishedAt || new Date().toISOString(),
+      }));
+    };
+
+    const cleanedArticlesEn = cleanArticles(articlesEn);
+    const cleanedArticlesZh = cleanArticles(articlesZh);
+
+    console.log(`✅ 成功获取 ${cleanedArticlesEn.length + cleanedArticlesZh.length} 条Newsroom数据`);
+
+    return {
+      props: {
+        articles: {
+          en: cleanedArticlesEn,
+          'zh-Hans': cleanedArticlesZh
+        }
+      },
+      revalidate: 3600 // 每小时重新生成
+    }
+  } catch (error) {
+    console.error('❌ 预生成Newsroom页面数据失败:', error)
+    
+    return {
+      props: {
+        articles: {
+          en: [],
+          'zh-Hans': []
+        }
+      },
+      revalidate: 3600
+    }
+  }
 } 

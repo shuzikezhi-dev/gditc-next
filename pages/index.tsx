@@ -23,11 +23,17 @@ interface Sector {
 }
 
 interface HomeProps {
-  sectors: Sector[];
+  sectors: {
+    en: Sector[];
+    'zh-Hans': Sector[];
+  };
 }
 
 export default function Home({ sectors }: HomeProps) {
   const { language } = useLanguage();
+  
+  // 根据当前语言获取对应的sectors
+  const currentSectors = sectors[language as keyof typeof sectors] || sectors.en || [];
 
   return (
     <Layout>
@@ -288,21 +294,33 @@ export default function Home({ sectors }: HomeProps) {
   );
 }
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async ({ locale }) => {
   try {
-    const sectors = await getSectors();
+    // 为每种语言获取sectors数据
+    const [sectorsEn, sectorsZh] = await Promise.all([
+      getSectors('Network', 'en'),
+      getSectors('Network', 'zh-Hans')
+    ]);
 
     return {
       props: {
-        sectors,
+        sectors: {
+          en: sectorsEn || [],
+          'zh-Hans': sectorsZh || []
+        },
       },
+      revalidate: 3600, // 每小时重新生成
     };
   } catch (error) {
     console.error('Error in getStaticProps:', error);
     return {
       props: {
-        sectors: [],
+        sectors: {
+          en: [],
+          'zh-Hans': []
+        },
       },
+      revalidate: 3600,
     };
   }
 }; 

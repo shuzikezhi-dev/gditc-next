@@ -8,14 +8,15 @@ import { GetStaticProps } from 'next'
 import { useLanguage } from './_app'
 
 interface SectorsPageProps {
-  initialSectors: Sector[]
+  sectors: Sector[]
+  currentType: string
 }
 
-export default function Sectors({ initialSectors }: SectorsPageProps) {
+export default function Sectors({ sectors: initialSectors, currentType }: SectorsPageProps) {
   const router = useRouter()
-  const { language, setLanguage } = useLanguage()
+  const { language } = useLanguage()
   const [sectors, setSectors] = useState<Sector[]>(initialSectors)
-  const [activeFilter, setActiveFilter] = useState<string>('Network')
+  const [activeFilter, setActiveFilter] = useState<string>(currentType)
   const [loading, setLoading] = useState(false)
 
   const sectorTypes = [
@@ -51,24 +52,12 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
     }
   ]
 
-  // 从URL参数初始化状态
+  // 监听全局语言变化时重新获取数据
   useEffect(() => {
-    if (router.isReady) {
-      const { type } = router.query
-      const newType = (type as string) || 'Network'
-      
-      setActiveFilter(newType)
-      
-      // 如果参数与初始值不同，获取新数据
-      if (newType !== 'Network') {
-        fetchSectors(newType, language)
-      }
+    if (language !== router.locale) {
+      // 语言发生变化，需要获取新数据
+      fetchSectors(activeFilter, language)
     }
-  }, [router.isReady, router.query])
-
-  // 监听全局语言变化
-  useEffect(() => {
-    fetchSectors(activeFilter, language)
   }, [language])
 
   // 获取sectors数据的函数
@@ -86,13 +75,11 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
     }
   }
 
-  // 移除这个处理函数，使用全局的语言切换
-
   // 处理类型筛选
   const handleFilterChange = (type: string) => {
     setActiveFilter(type)
     
-    // 更新URL但不刷新页面，只保存类型参数
+    // 更新URL但不刷新页面
     const newUrl = `/sectors?type=${type}`
     router.push(newUrl, undefined, { shallow: true })
     
@@ -116,7 +103,6 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
   // 处理富文本内容，提取纯文本用于预览
   const extractTextFromContent = (content: string) => {
     if (!content) return ''
-    // 服务端安全的文本提取
     return content.replace(/<[^>]*>/g, '').trim()
   }
 
@@ -234,13 +220,6 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
             ) : sectors.length > 0 ? (
               <div className="flex flex-wrap -mx-4">
                 {sectors.map((sector, index) => {
-                  // 调试日志
-                  if (sector.cover) {
-                    console.log(`✅ Sector ${index} has cover:`, sector.cover.url);
-                  } else {
-                    console.log(`❌ Sector ${index} missing cover:`, sector.title);
-                  }
-                  
                   return (
                   <div key={sector.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
                     <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
@@ -250,15 +229,6 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
                             src={sector.cover?.url || '/images/blog/blog-01.jpg'}
                             alt={sector.title}
                             className="w-full h-48 object-cover transition group-hover:rotate-6 group-hover:scale-125"
-                            onError={(e) => {
-                              console.log('Image load error for sector:', sector.id, 'cover:', sector.cover);
-                              console.log('Attempted URL:', sector.cover?.url);
-                            }}
-                            onLoad={() => {
-                              if (sector.cover?.url) {
-                                console.log('Image loaded successfully for sector:', sector.id, 'URL:', sector.cover.url);
-                              }
-                            }}
                           />
                         </a>
                       </div>
@@ -269,12 +239,12 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
                         <h3>
                           <a
                             href={`/sectors/${sector.documentId || sector.id}`}
-                            className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl"
+                            className={`inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title ${language === 'zh-Hans' ? 'zh' : 'en'}`}
                           >
                             {sector.title}
                           </a>
                         </h3>
-                        <p className="max-w-[370px] text-base text-body-color dark:text-dark-6">
+                        <p className={`max-w-[370px] text-base text-body-color dark:text-dark-6 article-description ${language === 'zh-Hans' ? 'zh' : 'en'}`}>
                           {extractTextFromContent(sector.descript || sector.content)}
                         </p>
                       </div>
@@ -331,23 +301,35 @@ export default function Sectors({ initialSectors }: SectorsPageProps) {
   )
 }
 
-export const getStaticProps: GetStaticProps<SectorsPageProps> = async () => {
+// 注意：静态路由 /sectors 不需要 getStaticPaths 函数
+// getStaticPaths 只用于动态路由（如 [id].tsx）
+
+export const getStaticProps: GetStaticProps<SectorsPageProps> = async ({ locale, params }) => {
   try {
-    // 只获取默认的英文Network数据作为初始数据
-    const sectors = await getSectors('Network', 'en')
+    // 从URL params获取type，如果没有则默认为Network
+    const type = 'Network' // 暂时固定为Network，因为我们使用查询参数处理类型切换
+    const language = locale || 'en'
+    
+    console.log(`SSG: Generating page for type: ${type}, locale: ${language}`)
+    
+    const sectors = await getSectors(type, language)
     
     return {
       props: {
-        initialSectors: sectors || []
-      }
+        sectors: sectors || [],
+        currentType: type
+      },
+      revalidate: 3600 // 每小时重新生成
     }
   } catch (error) {
     console.error('Error fetching sectors:', error)
     
     return {
       props: {
-        initialSectors: []
-      }
+        sectors: [],
+        currentType: 'Network'
+      },
+      revalidate: 3600
     }
   }
 } 
