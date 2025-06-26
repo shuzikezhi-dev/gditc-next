@@ -742,9 +742,9 @@ export const translations: { [key: string]: Translations } = {
           title: 'Three-Tier Review',
           description: 'Your application goes through our comprehensive review process',
           items: [
-            'Secretariat初审 (Initial Review)',
-            'Secretary-General/Core Members复评 (Secondary Review)',
-            'Decision-making Board终审 (Final Review)'
+            'Secretariat Initial Review',
+            'Secretary-General/Core Members Secondary Review',
+            'Decision-making Board Final Review'
           ],
         },
         step3: {
