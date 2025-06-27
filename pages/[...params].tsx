@@ -140,7 +140,7 @@ export default function DetailPage({
                 <ul className="flex items-center justify-center gap-[10px]">
                   <li>
                     <a
-                      href="/"
+                      href={language === 'en' ? '/' : `/${language}`}
                       className="flex items-center gap-[10px] text-base font-medium text-body-color dark:text-dark-6 hover:text-primary transition-colors"
                     >
                       {language === 'zh-Hans' ? '首页' : 'Home'}
@@ -149,7 +149,7 @@ export default function DetailPage({
                   <li>
                     <span className="text-body-color dark:text-dark-6"> / </span>
                     <a 
-                      href={`/${channelType}`}
+                      href={language === 'en' ? `/${channelType}` : `/${language}/${channelType}`}
                       className="capitalize text-body-color dark:text-dark-6 hover:text-primary transition-colors"
                     >
                       {getChannelDisplayName(channelType)}

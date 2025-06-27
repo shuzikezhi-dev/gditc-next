@@ -264,7 +264,7 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
                       {t(language, 'about.governance.technicalCommittees.activeCommitteesItems').split('|').map((item: string, index: number) => (
                         <li key={index} className="flex items-start">
                           <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                          <span className="text-body-color dark:text-dark-6">{item.trim()}</span>
+                          <span className="text-body-color dark:text-dark-6" dangerouslySetInnerHTML={{ __html: item.trim() }}></span>
                         </li>
                       ))}
                     </ul>
@@ -326,9 +326,10 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
                 </div>
               </div>
 
-              <div className="text-center mb-16 mt-8">
+              {/* Download Button */}
+              <div className="text-center mb-16">
                 <a href="#" className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                  <svg className="w-5 h-5 mr-2" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
                   </svg>
                   {t(language, 'about.governance.downloadChart')}
@@ -349,10 +350,10 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
               <div className="mb-12 text-center">
                 <div className="mx-auto max-w-4xl p-8 bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg">
                   <h3 className="mb-4 text-2xl font-bold text-dark dark:text-white">
-                    {t(language, 'about.coreMandates.vision')}
+                    {t(language, 'about.coreMandates.visionTitle')}
                   </h3>
                   <p className="text-lg text-body-color dark:text-dark-6 italic">
-                    "{t(language, 'about.coreMandates.visionQuote')}"
+                    {t(language, 'about.coreMandates.visionText')}
                   </p>
                 </div>
               </div>
@@ -377,52 +378,39 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
                     <tbody>
                       <tr className="bg-white dark:bg-dark hover:bg-gray-50 dark:hover:bg-dark-2 transition-colors">
                         <td className="px-6 py-6 text-center text-base font-medium text-dark dark:text-white border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.standardization.pillar')}
+                          {t(language, 'about.coreMandates.standardization')}
                         </td>
                         <td className="px-6 py-6 text-center text-base text-body-color dark:text-dark-6 border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.standardization.deliverable')}
+                          {t(language, 'about.coreMandates.standardizationDesc')}
                         </td>
                       </tr>
                       <tr className="bg-gray-100 dark:bg-dark-2 hover:bg-gray-150 dark:hover:bg-dark-3 transition-colors">
                         <td className="px-6 py-6 text-center text-base font-medium text-dark dark:text-white border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.qualityAssurance.pillar')}
+                          {t(language, 'about.coreMandates.qualityAssurance')}
                         </td>
                         <td className="px-6 py-6 text-center text-base text-body-color dark:text-dark-6 border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.qualityAssurance.deliverable')}
+                          {t(language, 'about.coreMandates.qualityAssuranceDesc')}
                         </td>
                       </tr>
                       <tr className="bg-white dark:bg-dark hover:bg-gray-50 dark:hover:bg-dark-2 transition-colors">
                         <td className="px-6 py-6 text-center text-base font-medium text-dark dark:text-white border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.knowledgeHub.pillar')}
+                          {t(language, 'about.coreMandates.knowledgeHub')}
                         </td>
                         <td className="px-6 py-6 text-center text-base text-body-color dark:text-dark-6 border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.knowledgeHub.deliverable')}
+                          {t(language, 'about.coreMandates.knowledgeHubDesc')}
                         </td>
                       </tr>
                       <tr className="bg-gray-100 dark:bg-dark-2 hover:bg-gray-150 dark:hover:bg-dark-3 transition-colors">
                         <td className="px-6 py-6 text-center text-base font-medium text-dark dark:text-white border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.ecosystemBuilding.pillar')}
+                          {t(language, 'about.coreMandates.ecosystemBuilding')}
                         </td>
                         <td className="px-6 py-6 text-center text-base text-body-color dark:text-dark-6 border-b border-gray-200 dark:border-dark-3 leading-6">
-                          {t(language, 'about.coreMandates.tableData.ecosystemBuilding.deliverable')}
+                          {t(language, 'about.coreMandates.ecosystemBuildingDesc')}
                         </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-              </div>
-
-              <div className="text-center mt-8">
-                <a 
-                  href="/DITC-CM-001：DITC Membership System and Fee Standards.pdf" 
-                  download="DITC-Active-Standards-Projects.pdf"
-                  className="inline-flex items-center px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
-                >
-                  <svg className="w-5 h-5 mr-2" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z M12,11L16,15H13.5V19H10.5V15H8L12,11Z"/>
-                  </svg>
-                  {t(language, 'about.coreMandates.viewActiveProjects')}
-                </a>
               </div>
             </div>
           </div>

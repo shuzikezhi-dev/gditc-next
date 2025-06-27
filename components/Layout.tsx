@@ -16,22 +16,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const router = useRouter();
   const { language } = useLanguage();
 
+  // 根据语言生成正确的路径前缀
+  const getLocalizedPath = (path: string) => {
+    // 如果是首页，根据语言返回对应路径
+    if (path === '/') {
+      return language === 'en' ? '/' : `/${language}`;
+    }
+    // 其他页面添加语言前缀
+    return language === 'en' ? path : `/${language}${path}`;
+  };
+
   // 导航菜单项 - 删除News，只保留Newsroom
   const navigationItems = [
-    { href: '/', label: t(language, 'navigation.home'), key: 'home' },
-    { href: '/about', label: t(language, 'navigation.about'), key: 'about' },
-    { href: '/sectors', label: t(language, 'navigation.sectors'), key: 'sectors' },
-    { href: '/activities-services', label: t(language, 'navigation.activitiesServices'), key: 'activities' },
-    { href: '/events', label: t(language, 'navigation.events'), key: 'events' },
-    { href: '/newsroom', label: t(language, 'navigation.newsroom'), key: 'newsroom' },
-    { href: '/join-us', label: t(language, 'navigation.joinUs'), key: 'joinUs' },
+    { href: getLocalizedPath('/'), label: t(language, 'navigation.home'), key: 'home' },
+    { href: getLocalizedPath('/about'), label: t(language, 'navigation.about'), key: 'about' },
+    { href: getLocalizedPath('/sectors'), label: t(language, 'navigation.sectors'), key: 'sectors' },
+    { href: getLocalizedPath('/ActivitiesAndServices'), label: t(language, 'navigation.activitiesServices'), key: 'activities' },
+    { href: getLocalizedPath('/events'), label: t(language, 'navigation.events'), key: 'events' },
+    { href: getLocalizedPath('/newsroom'), label: t(language, 'navigation.newsroom'), key: 'newsroom' },
+    { href: getLocalizedPath('/join-us'), label: t(language, 'navigation.joinUs'), key: 'joinUs' },
   ];
 
   // Resources下拉菜单项
   const resourcesItems = [
-    { href: '/resources?type=white-papers', label: t(language, 'navigation.resourcesMenu.whitePapers') },
-    { href: '/resources?type=technical-reports', label: t(language, 'navigation.resourcesMenu.technicalReports') },
-    { href: '/resources?type=case-studies', label: t(language, 'navigation.resourcesMenu.caseStudies') },
+    { href: getLocalizedPath('/resources?type=white-papers'), label: t(language, 'navigation.resourcesMenu.whitePapers') },
+    { href: getLocalizedPath('/resources?type=technical-reports'), label: t(language, 'navigation.resourcesMenu.technicalReports') },
+    { href: getLocalizedPath('/resources?type=case-studies'), label: t(language, 'navigation.resourcesMenu.caseStudies') },
   ];
 
   // 社交媒体链接
@@ -73,7 +83,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between py-4">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-3">
+              <Link href={getLocalizedPath('/')} className="flex items-center space-x-3">
                 <img 
                   src="/logo_ditc.png" 
                   alt="DITC Logo" 
@@ -193,7 +203,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* First Row: Logo Only */}
           <div className="flex flex-wrap -mx-4 mb-8">
             <div className="w-full px-4">
-              <Link href="/" className="mb-6 inline-flex items-center space-x-3">
+              <Link href={getLocalizedPath('/')} className="mb-6 inline-flex items-center space-x-3">
                 <img src="/logo_dark.png" alt="DITC logo" className="h-12 w-auto" />
                 <span className="text-2xl font-bold text-white">DIGITAL INFRASTRUCTURE TECHNICAL COUNCIL</span>
               </Link>
