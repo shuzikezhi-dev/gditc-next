@@ -115,30 +115,19 @@ export interface Translations {
     };
     coreMandates: {
       title: string;
-      vision: string;
-      visionQuote: string;
+      visionTitle: string;
+      visionText: string;
       keyObjectives: string;
       strategicPillars: string;
       concreteDeliverables: string;
-      tableData: {
-        standardization: {
-          pillar: string;
-          deliverable: string;
-        };
-        qualityAssurance: {
-          pillar: string;
-          deliverable: string;
-        };
-        knowledgeHub: {
-          pillar: string;
-          deliverable: string;
-        };
-        ecosystemBuilding: {
-          pillar: string;
-          deliverable: string;
-        };
-      };
-      viewActiveProjects: string;
+      standardization: string;
+      standardizationDesc: string;
+      qualityAssurance: string;
+      qualityAssuranceDesc: string;
+      knowledgeHub: string;
+      knowledgeHubDesc: string;
+      ecosystemBuilding: string;
+      ecosystemBuildingDesc: string;
     };
     keyFeatures: {
       title: string;
@@ -521,30 +510,19 @@ export const translations: { [key: string]: Translations } = {
       },
       coreMandates: {
         title: 'Core Mandates',
-        vision: 'Vision',
-        visionQuote: 'To build a global digital infrastructure technology ecosystem that enables all stakeholders to collaboratively develop and benefit from high-quality digital foundations.',
+        visionTitle: 'Vision',
+        visionText: 'To build a global digital infrastructure technology ecosystem that enables all stakeholders to collaboratively develop and benefit from high-quality digital foundations.',
         keyObjectives: 'Key Objectives',
         strategicPillars: 'Strategic Pillars',
         concreteDeliverables: 'Concrete Deliverables',
-        tableData: {
-          standardization: {
-            pillar: 'Standardization',
-            deliverable: 'Develop international standards for AI, data centers, and networking'
-          },
-          qualityAssurance: {
-            pillar: 'Quality Assurance',
-            deliverable: 'Provide testing, measurement, and certification services (e.g., DITC-AI Trust Mark)'
-          },
-          knowledgeHub: {
-            pillar: 'Knowledge Hub',
-            deliverable: 'Publish journals, manage technical communities, and host global industry summits'
-          },
-          ecosystemBuilding: {
-            pillar: 'Ecosystem Building',
-            deliverable: 'Collaborate with ISO, IEEE, and other international organizations on joint standards'
-          },
-        },
-        viewActiveProjects: 'View Our Active Standards Projects',
+        standardization: 'Standardization',
+        standardizationDesc: 'Develop international standards for AI, data centers, and networking',
+        qualityAssurance: 'Quality Assurance',
+        qualityAssuranceDesc: 'Provide testing, measurement, and certification services (e.g., DITC-AI Trust Mark)',
+        knowledgeHub: 'Knowledge Hub',
+        knowledgeHubDesc: 'Publish journals, manage technical communities, and host global industry summits',
+        ecosystemBuilding: 'Ecosystem Building',
+        ecosystemBuildingDesc: 'Collaborate with ISO, IEEE, and other international organizations on joint standards',
       },
       keyFeatures: {
         title: 'Key Features of DITC Governance',
@@ -959,30 +937,19 @@ export const translations: { [key: string]: Translations } = {
       },
       coreMandates: {
         title: '核心职责',
-        vision: '愿景',
-        visionQuote: '构建一个全球数字基础设施技术生态系统，使所有利益相关者能够协作开发并受益于高质量的数字基础。',
+        visionTitle: '愿景',
+        visionText: '构建一个全球数字基础设施技术生态系统，使所有利益相关者能够协作开发并受益于高质量的数字基础。',
         keyObjectives: '关键目标',
         strategicPillars: '战略支柱',
         concreteDeliverables: '具体成果',
-        tableData: {
-          standardization: {
-            pillar: '标准化',
-            deliverable: '为AI、数据中心和网络制定国际标准'
-          },
-          qualityAssurance: {
-            pillar: '质量保证',
-            deliverable: '提供测试、测量和认证服务（如DITC-AI信任标识）'
-          },
-          knowledgeHub: {
-            pillar: '知识中心',
-            deliverable: '发布期刊，管理技术社区，举办全球行业峰会'
-          },
-          ecosystemBuilding: {
-            pillar: '生态系统建设',
-            deliverable: '与ISO、IEEE等国际组织合作制定联合标准'
-          },
-        },
-        viewActiveProjects: '查看我们的活跃标准项目',
+        standardization: '标准化',
+        standardizationDesc: '为AI、数据中心和网络制定国际标准',
+        qualityAssurance: '质量保证',
+        qualityAssuranceDesc: '提供测试、测量和认证服务（如DITC-AI信任标识）',
+        knowledgeHub: '知识中心',
+        knowledgeHubDesc: '发布期刊，管理技术社区，举办全球行业峰会',
+        ecosystemBuilding: '生态系统建设',
+        ecosystemBuildingDesc: '与ISO、IEEE等国际组织合作制定联合标准',
       },
       keyFeatures: {
         title: 'DITC治理的关键特征',
