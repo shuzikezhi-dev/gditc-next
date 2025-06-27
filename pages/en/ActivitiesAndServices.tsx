@@ -1,6 +1,6 @@
 import ActivitiesAndServices from '../ActivitiesAndServices'
 
-export default function EnActivitiesServices(props: any) {
+export default function EnActivitiesAndServices(props: any) {
   return <ActivitiesAndServices {...props} />
 }
 

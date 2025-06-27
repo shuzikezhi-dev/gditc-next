@@ -1,6 +1,6 @@
 import ActivitiesAndServices from '../ActivitiesAndServices'
 
-export default function ZhHansActivitiesServices(props: any) {
+export default function ZhHansActivitiesAndServices(props: any) {
   return <ActivitiesAndServices {...props} />
 }
 
