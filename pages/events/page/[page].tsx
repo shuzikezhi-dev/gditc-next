@@ -74,13 +74,17 @@ const Pagination = ({
       {currentPage > 1 ? (
         <Link 
           href={`${basePath}/${currentPage - 1}`}
-          className="px-4 py-2 rounded-md transition-colors bg-white text-gray-700 border hover:bg-gray-50 dark:bg-dark-2 dark:text-white dark:border-dark-3 dark:hover:bg-dark-3"
+          className="px-3 py-2 rounded-md transition-colors bg-white text-gray-700 border hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:bg-dark-2 dark:text-white dark:border-dark-3 dark:hover:bg-blue-500 dark:hover:border-blue-500"
         >
-          {getText('previous')}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </Link>
       ) : (
-        <span className="px-4 py-2 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed">
-          {getText('previous')}
+        <span className="px-3 py-2 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </span>
       )}
 
@@ -88,7 +92,7 @@ const Pagination = ({
         page === currentPage ? (
           <span 
             key={page}
-            className="px-4 py-2 rounded-md bg-primary text-white"
+            className="px-4 py-2 rounded-md bg-blue-500 text-white"
           >
             {page}
           </span>
@@ -96,7 +100,7 @@ const Pagination = ({
           <Link
             key={page}
             href={`${basePath}/${page}`}
-            className="px-4 py-2 rounded-md transition-colors bg-white text-gray-700 border hover:bg-gray-50 dark:bg-dark-2 dark:text-white dark:border-dark-3 dark:hover:bg-dark-3"
+            className="px-4 py-2 rounded-md transition-colors bg-white text-gray-700 border hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:bg-dark-2 dark:text-white dark:border-dark-3 dark:hover:bg-blue-500 dark:hover:border-blue-500"
           >
             {page}
           </Link>
@@ -106,13 +110,17 @@ const Pagination = ({
       {currentPage < totalPages ? (
         <Link 
           href={`${basePath}/${currentPage + 1}`}
-          className="px-4 py-2 rounded-md transition-colors bg-white text-gray-700 border hover:bg-gray-50 dark:bg-dark-2 dark:text-white dark:border-dark-3 dark:hover:bg-dark-3"
+          className="px-3 py-2 rounded-md transition-colors bg-white text-gray-700 border hover:bg-blue-500 hover:text-white hover:border-blue-500 dark:bg-dark-2 dark:text-white dark:border-dark-3 dark:hover:bg-blue-500 dark:hover:border-blue-500"
         >
-          {getText('next')}
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </Link>
       ) : (
-        <span className="px-4 py-2 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed">
-          {getText('next')}
+        <span className="px-3 py-2 rounded-md bg-gray-100 text-gray-400 cursor-not-allowed">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </span>
       )}
     </div>

@@ -10,10 +10,27 @@ import { useLanguage } from './_app'
 interface AboutData {
   title: string
   blocks: any[]
-  video?: {
-    url: string
+  video?: Array<{
+    id?: number
+    documentId?: string
     name?: string
-  }
+    alternativeText?: string
+    caption?: string
+    width?: number
+    height?: number
+    formats?: any
+    hash?: string
+    ext?: string
+    mime?: string
+    size?: number
+    url: string
+    previewUrl?: string
+    provider?: string
+    provider_metadata?: any
+    createdAt?: string
+    updatedAt?: string
+    publishedAt?: string
+  }>
   aboutDwnUrl?: {
     url: string
     name?: string
@@ -91,13 +108,13 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
                       
                       <div className="flex justify-center">
                         <div className="w-4/5 aspect-video bg-gray-200 dark:bg-dark-3 rounded-lg flex items-center justify-center">
-                          {aboutData?.video?.url ? (
+                          {aboutData?.video?.[0]?.url ? (
                             <video 
                               className="w-full h-full rounded-lg object-cover"
                               controls
                               poster=""
                             >
-                              <source src={aboutData.video.url} type="video/mp4" />
+                              <source src={aboutData.video[0].url} type="video/mp4" />
                               Your browser does not support the video tag.
                             </video>
                           ) : (

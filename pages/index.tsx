@@ -5,7 +5,7 @@ import Layout from '../components/Layout';
 import SEOHead from '../components/SEOHead';
 import OptimizedImage from '../components/OptimizedImage';
 import AnimatedNumber from '../components/AnimatedNumber';
-import { getSectors } from '../lib/strapi';
+import { getSectors, getHome } from '../lib/strapi';
 import { t } from '../lib/translations';
 import { useLanguage } from './_app';
 
@@ -22,18 +22,84 @@ interface Sector {
   };
 }
 
+interface BannerSwiperItem {
+  id?: number;
+  title: string;
+  description: string;
+  remark?: string;
+  images?: {
+    id?: number;
+    documentId?: string;
+    name?: string;
+    alternativeText?: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    formats?: {
+      large?: {
+        url: string;
+        width: number;
+        height: number;
+      };
+      medium?: {
+        url: string;
+        width: number;
+        height: number;
+      };
+      small?: {
+        url: string;
+        width: number;
+        height: number;
+      };
+      thumbnail?: {
+        url: string;
+        width: number;
+        height: number;
+      };
+    };
+    url: string;
+  };
+}
+
 interface HomeProps {
   sectors: {
     en: Sector[];
     'zh-Hans': Sector[];
   };
+  homeData?: {
+    title: string;
+    blocks?: any[];
+    bannerSwiper?: BannerSwiperItem[];
+  };
 }
 
-export default function Home({ sectors }: HomeProps) {
+export default function Home({ sectors, homeData }: HomeProps) {
   const { language } = useLanguage();
+  const [currentSlide, setCurrentSlide] = useState(0);
   
   // 根据当前语言获取对应的sectors
   const currentSectors = sectors[language as keyof typeof sectors] || sectors.en || [];
+  
+  // 获取轮播图数据
+  const bannerItems = homeData?.bannerSwiper || [];
+  
+  // 轮播图自动切换
+  useEffect(() => {
+    if (bannerItems.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % bannerItems.length);
+    }, 5000); // 每5秒切换一次
+    
+    return () => clearInterval(interval);
+  }, [bannerItems.length]);
+  
+  // 处理轮播图点击
+  const handleSlideClick = (remark?: string) => {
+    if (remark) {
+      window.open(remark, '_blank');
+    }
+  };
 
   return (
     <Layout>
@@ -44,8 +110,11 @@ export default function Home({ sectors }: HomeProps) {
       
       <style jsx>{`
         .hero-slide {
-          position: relative;
-          height: 600px;
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
           background-size: cover;
           background-position: center;
         }
@@ -89,23 +158,114 @@ export default function Home({ sectors }: HomeProps) {
         .sectorItem .group:hover h4 {
           color: white;
         }
+        
+        .hero-slide {
+          transition: opacity 1s ease-in-out;
+        }
+        
+        .hero-slide:hover {
+          transform: scale(1.02);
+          transition: transform 0.5s ease;
+        }
+        
+        .hero-content h2 {
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+        
+        .hero-content p {
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+        }
       `}</style>
       
       {/* Hero Section - 轮播图 */}
       <div className="relative h-[600px] overflow-hidden">
-        <div className="hero-slide" style={{backgroundImage: "url('/images/hero/hero-image.jpg')"}}>
-          <div className="hero-content">
-            <h2 className="text-4xl font-bold mb-4">
-              {t(language, 'hero.aiSummitTitle')}
-            </h2>
-            <p className="text-lg mb-4">
-              {t(language, 'hero.aiSummitSubtitle')}
-            </p>
-            <a href="#" className="bg-primary text-white px-6 py-2 rounded-lg inline-block hover:bg-opacity-90">
-              {t(language, 'hero.cta')}
-            </a>
+        {bannerItems.length > 0 ? (
+          <>
+            {/* 轮播图容器 */}
+            <div className="relative w-full h-full">
+              {bannerItems.map((item, index) => (
+                <div
+                  key={item.id || index}
+                  className={`absolute inset-0 hero-slide transition-opacity duration-1000 ${
+                    index === currentSlide ? 'opacity-100' : 'opacity-0'
+                  }`}
+                  style={{
+                    backgroundImage: item.images?.url 
+                      ? `url('${item.images.url}')` 
+                      : "url('/images/hero/hero-image.jpg')"
+                  }}
+                  onClick={() => handleSlideClick(item.remark)}
+                >
+                  <div className="hero-content cursor-pointer">
+                    <h2 className="text-4xl font-bold mb-4">
+                      {item.title}
+                    </h2>
+                    <p className="text-lg mb-4">
+                      {item.description}
+                    </p>
+                    {item.remark && (
+                      <span className="bg-primary text-white px-6 py-2 rounded-lg inline-block hover:bg-opacity-90">
+                        {t(language, 'hero.cta')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {/* 导航点 */}
+            {bannerItems.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {bannerItems.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-3 h-3 rounded-full transition-colors ${
+                      index === currentSlide ? 'bg-white' : 'bg-white/50'
+                    }`}
+                    onClick={() => setCurrentSlide(index)}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {/* 左右箭头 */}
+            {bannerItems.length > 1 && (
+              <>
+                <button
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+                  onClick={() => setCurrentSlide((prev) => (prev - 1 + bannerItems.length) % bannerItems.length)}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 transition-colors"
+                  onClick={() => setCurrentSlide((prev) => (prev + 1) % bannerItems.length)}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          /* 默认轮播图 */
+          <div className="hero-slide" style={{backgroundImage: "url('/images/hero/hero-image.jpg')"}}>
+            <div className="hero-content">
+              <h2 className="text-4xl font-bold mb-4">
+                {t(language, 'hero.aiSummitTitle')}
+              </h2>
+              <p className="text-lg mb-4">
+                {t(language, 'hero.aiSummitSubtitle')}
+              </p>
+              <span className="bg-primary text-white px-6 py-2 rounded-lg inline-block hover:bg-opacity-90">
+                {t(language, 'hero.cta')}
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Features Section - 统计数据 */}
@@ -296,11 +456,33 @@ export default function Home({ sectors }: HomeProps) {
 
 export const getStaticProps: GetStaticProps = async () => {
   try {
-    // 为每种语言获取sectors数据
-    const [sectorsEn, sectorsZh] = await Promise.all([
+    console.log('🔄 Starting getStaticProps for Home page...');
+    
+    // 并行获取所有数据
+    const [sectorsEn, sectorsZh, homeData] = await Promise.all([
       getSectors('Network', 'en'),
-      getSectors('Network', 'zh-Hans')
+      getSectors('Network', 'zh-Hans'),
+      getHome()
     ]);
+
+    console.log('✅ Sectors EN count:', sectorsEn?.length || 0);
+    console.log('✅ Sectors ZH count:', sectorsZh?.length || 0);
+    console.log('🏠 Home data received:', !!homeData);
+    
+    if (homeData) {
+      console.log('🏠 Home data details:');
+      console.log('  - Title:', homeData.title);
+      console.log('  - Has bannerSwiper:', !!homeData.bannerSwiper);
+      console.log('  - BannerSwiper count:', homeData.bannerSwiper?.length || 0);
+      
+      if (homeData.bannerSwiper && homeData.bannerSwiper.length > 0) {
+        homeData.bannerSwiper.forEach((item, index) => {
+          console.log(`  - Banner ${index + 1}: ${item.title} (has image: ${!!item.images})`);
+        });
+      }
+    } else {
+      console.log('❌ No home data received');
+    }
 
     return {
       props: {
@@ -308,16 +490,18 @@ export const getStaticProps: GetStaticProps = async () => {
           en: sectorsEn || [],
           'zh-Hans': sectorsZh || []
         },
+        homeData: homeData || null,
       }
     };
   } catch (error) {
-    console.error('Error in getStaticProps:', error);
+    console.error('❌ Error in getStaticProps:', error);
     return {
       props: {
         sectors: {
           en: [],
           'zh-Hans': []
         },
+        homeData: null,
       }
     };
   }

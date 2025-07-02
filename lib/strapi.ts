@@ -383,10 +383,50 @@ export interface Resource {
   publishedAt?: string;
 }
 
+// 定义通用的文件接口
+interface StrapiFile {
+  id?: number;
+  documentId?: string;
+  name?: string;
+  alternativeText?: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+  formats?: any;
+  hash?: string;
+  ext?: string;
+  mime?: string;
+  size?: number;
+  url: string;
+  previewUrl?: string;
+  provider?: string;
+  provider_metadata?: any;
+  createdAt?: string;
+  updatedAt?: string;
+  publishedAt?: string;
+}
+
 export interface About {
   title: string;
   blocks?: any[];
-  video?: {
+  video?: StrapiFile[];
+  aboutDwnUrl?: StrapiFile;
+  MembershipDownloadUrl?: StrapiFile;
+  ConstitutionDownloadUrl?: StrapiFile;
+}
+
+export interface Joinus {
+  title: string;
+  blocks?: any[];
+  download?: StrapiFile;
+}
+
+export interface BannerSwiper {
+  id?: number;
+  title: string;
+  description: string;
+  remark?: string;
+  images?: {
     id?: number;
     documentId?: string;
     name?: string;
@@ -394,68 +434,74 @@ export interface About {
     caption?: string;
     width?: number;
     height?: number;
+    formats?: {
+      large?: {
+        ext: string;
+        url: string;
+        hash: string;
+        mime: string;
+        name: string;
+        path?: string;
+        size: number;
+        width: number;
+        height: number;
+        sizeInBytes: number;
+      };
+      medium?: {
+        ext: string;
+        url: string;
+        hash: string;
+        mime: string;
+        name: string;
+        path?: string;
+        size: number;
+        width: number;
+        height: number;
+        sizeInBytes: number;
+      };
+      small?: {
+        ext: string;
+        url: string;
+        hash: string;
+        mime: string;
+        name: string;
+        path?: string;
+        size: number;
+        width: number;
+        height: number;
+        sizeInBytes: number;
+      };
+      thumbnail?: {
+        ext: string;
+        url: string;
+        hash: string;
+        mime: string;
+        name: string;
+        path?: string;
+        size: number;
+        width: number;
+        height: number;
+        sizeInBytes: number;
+      };
+    };
+    hash?: string;
+    ext?: string;
+    mime?: string;
+    size?: number;
     url: string;
-    createdAt?: string;
-    updatedAt?: string;
-    publishedAt?: string;
-  };
-  aboutDwnUrl?: {
-    id?: number;
-    documentId?: string;
-    name?: string;
-    alternativeText?: string;
-    caption?: string;
-    width?: number;
-    height?: number;
-    url: string;
-    createdAt?: string;
-    updatedAt?: string;
-    publishedAt?: string;
-  };
-  MembershipDownloadUrl?: {
-    id?: number;
-    documentId?: string;
-    name?: string;
-    alternativeText?: string;
-    caption?: string;
-    width?: number;
-    height?: number;
-    url: string;
-    createdAt?: string;
-    updatedAt?: string;
-    publishedAt?: string;
-  };
-  ConstitutionDownloadUrl?: {
-    id?: number;
-    documentId?: string;
-    name?: string;
-    alternativeText?: string;
-    caption?: string;
-    width?: number;
-    height?: number;
-    url: string;
+    previewUrl?: string;
+    provider?: string;
+    provider_metadata?: any;
     createdAt?: string;
     updatedAt?: string;
     publishedAt?: string;
   };
 }
 
-export interface Joinus {
+export interface Home {
   title: string;
   blocks?: any[];
-  download?: {
-    id?: number;
-    documentId?: string;
-    name?: string;
-    alternativeText?: string;
-    caption?: string;
-    width?: number;
-    height?: number;
-    url: string;
-    createdAt?: string;
-    updatedAt?: string;
-    publishedAt?: string;
-  };
+  bannerSwiper?: BannerSwiper[];
 }
 
 export interface Global {
@@ -979,13 +1025,45 @@ export const getResources = async (type?: string): Promise<Resource[]> => {
 // 获取关于我们信息
 export const getAbout = async (): Promise<About | null> => {
   try {
+    console.log('📄 Starting getAbout API call...');
+    console.log('🌐 API URL:', strapiAPI.defaults.baseURL + '/about?populate=*');
+    
     const response = await strapiAPI.get<StrapiSingleResponse<About>>(
       '/about?populate=*'
     );
     
-    return response.data.data;
-  } catch (error) {
-    console.error('Error fetching about:', error);
+    console.log('✅ About API response status:', response.status);
+    const aboutData = response.data.data;
+    
+    if (aboutData) {
+      console.log('📄 About data found:');
+      console.log('  - Title:', aboutData.title);
+      console.log('  - Has video:', !!aboutData.video);
+      console.log('  - Has aboutDwnUrl:', !!aboutData.aboutDwnUrl);
+      console.log('  - Has MembershipDownloadUrl:', !!aboutData.MembershipDownloadUrl);
+      console.log('  - Has ConstitutionDownloadUrl:', !!aboutData.ConstitutionDownloadUrl);
+      
+      // 打印下载链接信息
+      if (aboutData.aboutDwnUrl) {
+        console.log(`  - aboutDwnUrl: ${aboutData.aboutDwnUrl.url} (${aboutData.aboutDwnUrl.ext})`);
+      }
+      if (aboutData.MembershipDownloadUrl) {
+        console.log(`  - MembershipDownloadUrl: ${aboutData.MembershipDownloadUrl.url} (${aboutData.MembershipDownloadUrl.ext})`);
+      }
+      if (aboutData.ConstitutionDownloadUrl) {
+        console.log(`  - ConstitutionDownloadUrl: ${aboutData.ConstitutionDownloadUrl.url} (${aboutData.ConstitutionDownloadUrl.ext})`);
+      }
+    } else {
+      console.log('❌ No about data in response');
+    }
+    
+    return aboutData;
+  } catch (error: any) {
+    console.error('❌ Error fetching about:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
     return null;
   }
 };
@@ -993,13 +1071,92 @@ export const getAbout = async (): Promise<About | null> => {
 // 获取Joinus信息
 export const getJoinus = async (): Promise<Joinus | null> => {
   try {
+    console.log('🤝 Starting getJoinus API call...');
+    console.log('🌐 API URL:', strapiAPI.defaults.baseURL + '/joinus?populate=*');
+    
     const response = await strapiAPI.get<StrapiSingleResponse<Joinus>>(
       '/joinus?populate=*'
     );
     
-    return response.data.data;
-  } catch (error) {
-    console.error('Error fetching joinus:', error);
+    console.log('✅ Joinus API response status:', response.status);
+    const joinusData = response.data.data;
+    
+    if (joinusData) {
+      console.log('🤝 Joinus data found:');
+      console.log('  - Title:', joinusData.title);
+      console.log('  - Has download:', !!joinusData.download);
+      
+      // 打印下载文件信息
+      if (joinusData.download) {
+        console.log(`  - Download file: ${joinusData.download.name}`);
+        console.log(`  - Download URL: ${joinusData.download.url}`);
+        console.log(`  - File type: ${joinusData.download.ext} (${joinusData.download.mime})`);
+        console.log(`  - File size: ${joinusData.download.size} KB`);
+      }
+    } else {
+      console.log('❌ No joinus data in response');
+    }
+    
+    return joinusData;
+  } catch (error: any) {
+    console.error('❌ Error fetching joinus:', {
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data
+    });
+    return null;
+  }
+};
+
+// 获取Home信息
+export const getHome = async (): Promise<Home | null> => {
+  try {
+    console.log('🏠 Starting getHome API call...');
+    console.log('🌐 API URL:', strapiAPI.defaults.baseURL + '/home?populate[bannerSwiper][populate]=*');
+    
+    const response = await strapiAPI.get<StrapiSingleResponse<Home>>(
+      '/home?populate[bannerSwiper][populate]=*'
+    );
+    
+    console.log('✅ Home API response status:', response.status);
+    console.log('📊 Home API response data:', JSON.stringify(response.data, null, 2));
+    
+    const homeData = response.data.data;
+    if (homeData) {
+      console.log('🏠 Home data found:');
+      console.log('  - Title:', homeData.title);
+      console.log('  - Has bannerSwiper:', !!homeData.bannerSwiper);
+      console.log('  - BannerSwiper type:', typeof homeData.bannerSwiper);
+      console.log('  - BannerSwiper is array:', Array.isArray(homeData.bannerSwiper));
+      
+      if (homeData.bannerSwiper) {
+        console.log('  - BannerSwiper count:', homeData.bannerSwiper.length);
+        if (Array.isArray(homeData.bannerSwiper)) {
+          homeData.bannerSwiper.forEach((item, index) => {
+            console.log(`  - Banner ${index + 1}:`);
+            console.log(`    - Title: ${item.title}`);
+            console.log(`    - Description: ${item.description}`);
+            console.log(`    - Remark: ${item.remark}`);
+            console.log(`    - Has images: ${!!item.images}`);
+            if (item.images) {
+              console.log(`      - Image URL: ${item.images.url}`);
+              console.log(`      - Image formats available: ${Object.keys(item.images.formats || {}).join(', ')}`);
+            }
+          });
+        }
+      }
+    } else {
+      console.log('❌ No home data in response');
+    }
+    
+    return homeData;
+  } catch (error: any) {
+    console.error('❌ Error fetching home:', {
+      message: error.message,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data
+    });
     return null;
   }
 };
