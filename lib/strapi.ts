@@ -386,6 +386,76 @@ export interface Resource {
 export interface About {
   title: string;
   blocks?: any[];
+  video?: {
+    id?: number;
+    documentId?: string;
+    name?: string;
+    alternativeText?: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    url: string;
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+  };
+  aboutDwnUrl?: {
+    id?: number;
+    documentId?: string;
+    name?: string;
+    alternativeText?: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    url: string;
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+  };
+  MembershipDownloadUrl?: {
+    id?: number;
+    documentId?: string;
+    name?: string;
+    alternativeText?: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    url: string;
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+  };
+  ConstitutionDownloadUrl?: {
+    id?: number;
+    documentId?: string;
+    name?: string;
+    alternativeText?: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    url: string;
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+  };
+}
+
+export interface Joinus {
+  title: string;
+  blocks?: any[];
+  download?: {
+    id?: number;
+    documentId?: string;
+    name?: string;
+    alternativeText?: string;
+    caption?: string;
+    width?: number;
+    height?: number;
+    url: string;
+    createdAt?: string;
+    updatedAt?: string;
+    publishedAt?: string;
+  };
 }
 
 export interface Global {
@@ -910,12 +980,26 @@ export const getResources = async (type?: string): Promise<Resource[]> => {
 export const getAbout = async (): Promise<About | null> => {
   try {
     const response = await strapiAPI.get<StrapiSingleResponse<About>>(
-      '/about'
+      '/about?populate=*'
     );
     
     return response.data.data;
   } catch (error) {
     console.error('Error fetching about:', error);
+    return null;
+  }
+};
+
+// 获取Joinus信息
+export const getJoinus = async (): Promise<Joinus | null> => {
+  try {
+    const response = await strapiAPI.get<StrapiSingleResponse<Joinus>>(
+      '/joinus?populate=*'
+    );
+    
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching joinus:', error);
     return null;
   }
 };

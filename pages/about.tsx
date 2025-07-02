@@ -10,6 +10,22 @@ import { useLanguage } from './_app'
 interface AboutData {
   title: string
   blocks: any[]
+  video?: {
+    url: string
+    name?: string
+  }
+  aboutDwnUrl?: {
+    url: string
+    name?: string
+  }
+  MembershipDownloadUrl?: {
+    url: string
+    name?: string
+  }
+  ConstitutionDownloadUrl?: {
+    url: string
+    name?: string
+  }
 }
 
 export default function About({ aboutData }: { aboutData: AboutData }) {
@@ -75,12 +91,23 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
                       
                       <div className="flex justify-center">
                         <div className="w-4/5 aspect-video bg-gray-200 dark:bg-dark-3 rounded-lg flex items-center justify-center">
-                          <div className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
-                            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M8 5v14l11-7z"/>
-                            </svg>
-                            <span>{t(language, 'about.whoWeAre.videoText')}</span>
-                          </div>
+                          {aboutData?.video?.url ? (
+                            <video 
+                              className="w-full h-full rounded-lg object-cover"
+                              controls
+                              poster=""
+                            >
+                              <source src={aboutData.video.url} type="video/mp4" />
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <div className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors cursor-pointer">
+                              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5v14l11-7z"/>
+                              </svg>
+                              <span>{t(language, 'about.whoWeAre.videoText')}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -132,6 +159,23 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
                   </p>
                 </div>
               </div>
+              
+              {/* About Download Button */}
+              {aboutData?.aboutDwnUrl?.url && (
+                <div className="text-center mt-8">
+                  <a 
+                    href={aboutData.aboutDwnUrl.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    {language === 'zh-Hans' ? '下载详细资料' : 'Download More Details'}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -327,14 +371,30 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
               </div>
 
               {/* Download Button */}
-              <div className="text-center mb-16">
-                <a href="#" className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                  </svg>
-                  {t(language, 'about.governance.downloadChart')}
-                </a>
-              </div>
+              {aboutData?.MembershipDownloadUrl?.url ? (
+                <div className="text-center mb-16">
+                  <a 
+                    href={aboutData.MembershipDownloadUrl.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    {t(language, 'about.governance.downloadChart')}
+                  </a>
+                </div>
+              ) : (
+                <div className="text-center mb-16">
+                  <a href="#" className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    {t(language, 'about.governance.downloadChart')}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -412,6 +472,23 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
                   </table>
                 </div>
               </div>
+              
+              {/* Core Mandates Download Button */}
+              {aboutData?.ConstitutionDownloadUrl?.url && (
+                <div className="text-center mt-8">
+                  <a 
+                    href={aboutData.ConstitutionDownloadUrl.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-6 py-3 bg-secondary text-white rounded-lg hover:bg-secondary/90 transition-colors"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    {language === 'zh-Hans' ? '下载章程文件' : 'Download Constitution'}
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -483,14 +560,14 @@ export default function About({ aboutData }: { aboutData: AboutData }) {
 
 export const getStaticProps: GetStaticProps = async ({ locale }) => {
   try {
-    // About页面使用静态翻译，不需要从Strapi获取多语言数据
+    // 从Strapi获取About页面数据
     const aboutData = await getAbout();
 
     return {
       props: {
-        aboutData: {
-          en: aboutData,
-          'zh-Hans': aboutData
+        aboutData: aboutData || {
+          title: 'About DITC',
+          blocks: []
         }
       }
     }
@@ -500,8 +577,8 @@ export const getStaticProps: GetStaticProps = async ({ locale }) => {
     return {
       props: {
         aboutData: {
-          en: null,
-          'zh-Hans': null
+          title: 'About DITC',
+          blocks: []
         }
       }
     }

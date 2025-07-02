@@ -216,7 +216,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="footer-section w-full px-4 lg:w-4/12 lg:flex-shrink-0 lg:pr-8">
               <div className="w-full mb-10">
                 <p className="mb-4 text-base text-white font-medium">
-                  {t(language, 'footer.tagline')}
+                  The Global Trust Framework for Digital Infrastructure
                 </p>
                 <div className="flex items-center -mx-3 mb-8">
                   <a href="#" className="px-3 text-white hover:text-primary">
@@ -368,10 +368,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="container mx-auto px-4">
             <div className="text-center space-y-3">
               <p className="text-base text-white">
-                {t(language, 'footer.copyright')}
+                © 2024 Digital Infrastructure Technical Council. All Rights Reserved.
               </p>
               <p className="text-sm text-white">
-                {t(language, 'footer.companyRegistration')}
+                DIGITAL INFRASTRUCTURE TECHNICAL COUNCIL LTD. Register No. 202438789K
               </p>
             </div>
           </div>

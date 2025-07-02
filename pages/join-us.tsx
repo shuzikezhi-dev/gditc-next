@@ -3,14 +3,23 @@ import { GetStaticProps } from 'next'
 import Layout from '../components/Layout'
 import SEOHead from '../components/SEOHead'
 import { t, getTranslation } from '../lib/translations'
+import { getJoinus } from '../lib/strapi'
 import { useLanguage } from './_app'
 
 interface JoinUsProps {
   // 预生成的翻译数据
   translations?: any;
+  joinusData?: {
+    title: string;
+    blocks?: any[];
+    download?: {
+      url: string;
+      name?: string;
+    };
+  };
 }
 
-export default function JoinUs({ translations = {} }: JoinUsProps) {
+export default function JoinUs({ translations = {}, joinusData }: JoinUsProps) {
   const { language } = useLanguage()
   
   const [formData, setFormData] = useState({
@@ -160,14 +169,31 @@ export default function JoinUs({ translations = {} }: JoinUsProps) {
               ))}
             </div>
 
-            {/* CTA Button */}
-            <div className="text-center mt-12">
-              <button className="inline-flex items-center px-8 py-4 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors">
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                {t(language, 'joinUs.beginApplication')}
-              </button>
+            {/* CTA Buttons */}
+            <div className="text-center mt-12 space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button className="inline-flex items-center px-8 py-4 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {t(language, 'joinUs.beginApplication')}
+                </button>
+                
+                {/* Download Button */}
+                {joinusData?.download?.url && (
+                  <a 
+                    href={joinusData.download.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-8 py-4 bg-secondary text-white rounded-lg font-semibold hover:bg-secondary/90 transition-colors"
+                  >
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                    </svg>
+                    {language === 'zh-Hans' ? '下载申请资料' : 'Download Application Materials'}
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </section>
@@ -228,11 +254,18 @@ export const getStaticProps: GetStaticProps<JoinUsProps> = async ({ locale }) =>
       translations[lang] = getTranslation(lang)
     })
 
+    // 从Strapi获取Joinus页面数据
+    const joinusData = await getJoinus();
+
     console.log(`✅ 成功预生成Join Us页面翻译数据`);
 
     return {
       props: {
-        translations
+        translations,
+        joinusData: joinusData || {
+          title: 'Join Us',
+          blocks: []
+        }
       }
     };
   } catch (error) {
@@ -243,6 +276,10 @@ export const getStaticProps: GetStaticProps<JoinUsProps> = async ({ locale }) =>
         translations: {
           'en': getTranslation('en'),
           'zh-Hans': getTranslation('zh-Hans')
+        },
+        joinusData: {
+          title: 'Join Us',
+          blocks: []
         }
       }
     };
