@@ -568,7 +568,7 @@ export const getAllPages = async (): Promise<{ slug: string }[]> => {
     }
     
     // 过滤掉与静态页面冲突的路径
-    const staticRoutes = ['about', 'join-us', 'activities-services', 'sectors', 'events', 'resources', 'news', 'newsroom'];
+    const staticRoutes = ['about', 'join-us', 'activities-services', 'training', 'events', 'standards', 'news', 'certifications'];
     
     return response.data.data
       .map((page) => {
@@ -635,7 +635,7 @@ export const getArticles = async (limit?: number, locale: string = 'en'): Promis
           author: article.author || null,
           category: article.category || null,
           blocks: article.blocks || null,
-          locale: article.locale,
+          locale: article.locale || 'en',
           createdAt: article.createdAt,
           updatedAt: article.updatedAt,
           publishedAt: article.publishedAt || article.createdAt,
@@ -750,7 +750,7 @@ export const getAllArticles = async (): Promise<{ slug: string }[]> => {
 };
 
 // 获取板块信息
-export const getSectors = async (type?: string, locale: string = 'en'): Promise<Sector[]> => {
+export const getTraining = async (type?: string, locale: string = 'en'): Promise<Sector[]> => {
   try {
     // 构建查询参数
     const queryParams = new URLSearchParams({
@@ -764,23 +764,23 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
       console.log(`🔄 使用 locale: ${locale}`);
     }
 
-    console.log(`Fetching sectors with locale: ${locale}, type: ${type || 'all'}`);
+    console.log(`Fetching training with locale: ${locale}, type: ${type || 'all'}`);
     
     const response = await strapiAPI.get<StrapiResponse<Sector>>(
-      `/sectors?${queryParams.toString()}`
+      `/trainings?${queryParams.toString()}`
     );
     
-    console.log('Sectors API response status:', response.status);
-    console.log('Sectors data length:', response.data.data?.length || 0);
+    console.log('Training API response status:', response.status);
+    console.log('Training data length:', response.data.data?.length || 0);
     
     if (!response.data.data || !Array.isArray(response.data.data)) {
-      console.warn('Invalid sectors response format');
+      console.warn('Invalid training response format');
       return [];
     }
     
-    let sectors = response.data.data.map((sector: any) => {
+    let training = response.data.data.map((sector: any) => {
       // 调试日志：打印原始数据结构
-      console.log('Raw sector data:', {
+      console.log('Raw training data:', {
         id: sector.id,
         documentId: sector.documentId,
         artcileId: sector.artcileId || sector.attributes?.artcileId,
@@ -796,7 +796,7 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
           ...sector.attributes, 
           id: sector.id,
           documentId: sector.documentId,
-          locale: sector.locale,
+          locale: sector.locale || 'en',
           // 确保所有可能为undefined的字段都设为null
           attach: sector.attributes.attach || null,
           cover: sector.attributes.cover || null,
@@ -817,7 +817,7 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
           descript: sector.descript || '',
           artcileId: sector.artcileId || null,
           type: sector.type || 'Network',
-          locale: sector.locale,
+          locale: sector.locale || 'en',
           // 直接使用sector对象中的字段
           attach: sector.attach || null,
           cover: sector.cover || null,
@@ -831,13 +831,13 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
     
     // 在前端进行筛选
     if (type) {
-      sectors = sectors.filter((sector: Sector) => sector.type === type);
-      console.log(`Filtered sectors by type '${type}':`, sectors.length);
+      training = training.filter((sector: Sector) => sector.type === type);
+      console.log(`Filtered training by type '${type}':`, training.length);
     }
     
-    return sectors;
+    return training;
   } catch (error: any) {
-    console.error('Error fetching sectors:', {
+    console.error('Error fetching training:', {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
@@ -848,7 +848,7 @@ export const getSectors = async (type?: string, locale: string = 'en'): Promise<
     if (error.response?.status === 403 && locale !== 'en') {
       console.warn('🔒 403 error with locale, trying fallback to English...');
       try {
-        return await getSectors(type, 'en');
+        return await getTraining(type, 'en');
       } catch (fallbackError) {
         console.error('Fallback request also failed:', fallbackError);
       }
@@ -878,8 +878,12 @@ export const getEvents = async (limit?: number, locale: string = 'en'): Promise<
       console.log(`🔄 使用默认 locale: en`);
     }
     
+    // 如果没有指定 limit，设置一个较大的值确保获取所有数据
     if (limit) {
       queryParams.append('pagination[limit]', limit.toString());
+    } else {
+      // 设置一个足够大的 limit 确保获取所有数据
+      queryParams.append('pagination[limit]', '100');
     }
     
     queryParams.append('sort', 'date:desc');
@@ -891,6 +895,15 @@ export const getEvents = async (limit?: number, locale: string = 'en'): Promise<
     console.log(`🔍 查询参数详情:`, Object.fromEntries(queryParams.entries()));
     
     const response = await strapiAPI.get<StrapiResponse<Event>>(url);
+    
+    // 打印分页信息用于调试
+    console.log(`📊 Events API 分页信息:`, {
+      page: response.data.meta?.pagination?.page,
+      pageSize: response.data.meta?.pagination?.pageSize,
+      pageCount: response.data.meta?.pagination?.pageCount,
+      total: response.data.meta?.pagination?.total,
+      dataLength: response.data.data?.length
+    });
     
     const events = response.data.data.map((event: any) => {
       // 调试日志：打印Events数据结构
@@ -960,8 +973,8 @@ export const getEvents = async (limit?: number, locale: string = 'en'): Promise<
   }
 };
 
-// 获取资源列表
-export const getResources = async (type?: string): Promise<Resource[]> => {
+// 获取标准列表
+export const getStandards = async (type?: string): Promise<Resource[]> => {
   try {
     const queryParams = new URLSearchParams();
     
@@ -973,12 +986,12 @@ export const getResources = async (type?: string): Promise<Resource[]> => {
     queryParams.append('sort', 'createdAt:desc');
     
     const response = await strapiAPI.get<StrapiResponse<Resource>>(
-      `/resources?${queryParams.toString()}`
+      `/standards?${queryParams.toString()}`
     );
     
     return response.data.data.map((resource: any) => {
-      // 调试日志：打印Resources数据结构
-      console.log('Raw resource data:', {
+      // 调试日志：打印Standards数据结构
+      console.log('Raw standards data:', {
         id: resource.id,
         title: resource.title || resource.attributes?.title,
         hasAttributes: !!resource.attributes,
@@ -995,7 +1008,7 @@ export const getResources = async (type?: string): Promise<Resource[]> => {
           type: resource.attributes.type,
           cover: resource.attributes.cover,
           attachments: resource.attributes.attachments,
-          locale: resource.locale,
+          locale: resource.locale || 'en',
           createdAt: resource.attributes.createdAt,
           updatedAt: resource.attributes.updatedAt,
           publishedAt: resource.attributes.publishedAt,
@@ -1009,7 +1022,7 @@ export const getResources = async (type?: string): Promise<Resource[]> => {
           type: resource.type,
           cover: resource.cover,
           attachments: resource.attachments,
-          locale: resource.locale,
+          locale: resource.locale || 'en',
           createdAt: resource.createdAt,
           updatedAt: resource.updatedAt,
           publishedAt: resource.publishedAt,
@@ -1017,7 +1030,7 @@ export const getResources = async (type?: string): Promise<Resource[]> => {
       }
     });
   } catch (error) {
-    console.error('Error fetching resources:', error);
+    console.error('Error fetching standards:', error);
     return [];
   }
 };
@@ -1175,10 +1188,10 @@ export const getGlobal = async (): Promise<Global | null> => {
   }
 };
 
-// 获取新闻资讯
-export const getNewsroom = async (limit?: number, locale: string = 'en'): Promise<Article[]> => {
+// 获取认证资讯
+export const getCertifications = async (limit?: number, locale: string = 'en'): Promise<Article[]> => {
   try {
-    console.log(`🔄 正在获取Newsroom数据 (${locale})...`);
+    console.log(`🔄 正在获取Certifications数据 (${locale})...`);
     
     const queryParams = new URLSearchParams();
     
@@ -1194,16 +1207,16 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
     queryParams.append('sort', 'publishedAt:desc');
     queryParams.append('populate', '*');
     
-    const url = `/newsrooms${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/certifications${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     
-    console.log(`🌐 完整的 Newsroom API URL: ${url}`);
+    console.log(`🌐 完整的 Certifications API URL: ${url}`);
     console.log(`🔍 查询参数详情:`, Object.fromEntries(queryParams.entries()));
     
     const response = await strapiAPI.get<StrapiResponse<Article>>(url);
     
     const articles = response.data.data.map((news: any) => {
-      // 调试日志：打印Newsroom数据结构
-      console.log('Raw newsroom data:', {
+      // 调试日志：打印Certifications数据结构
+      console.log('Raw certifications data:', {
         id: news.id,
         title: news.title || news.attributes?.title,
         locale: news.locale,
@@ -1249,10 +1262,10 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
       }
     });
     
-    console.log(`✅ 成功获取 ${articles.length} 条Newsroom数据`);
+    console.log(`✅ 成功获取 ${articles.length} 条Certifications数据`);
     return articles;
   } catch (error: any) {
-    console.error('❌ 获取Newsroom数据失败:', {
+    console.error('❌ 获取Certifications数据失败:', {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data,
@@ -1263,7 +1276,7 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
     if (error.response?.status === 403 && locale !== 'en') {
       console.warn('🔒 403 error with locale, trying fallback to English...');
       try {
-        return await getNewsroom(limit, 'en');
+        return await getCertifications(limit, 'en');
       } catch (fallbackError) {
         console.error('Fallback request also failed:', fallbackError);
       }
@@ -1274,17 +1287,17 @@ export const getNewsroom = async (limit?: number, locale: string = 'en'): Promis
 };
 
 // 获取单个sector by artcileId
-export const getSectorById = async (artcileId: string): Promise<Sector | null> => {
+export const getTrainingById = async (artcileId: string): Promise<Sector | null> => {
   try {
-    // 先尝试获取所有sectors，然后在客户端筛选
-    const allSectors = await getSectors();
-    const sector = allSectors.find(s => s.artcileId === artcileId);
+    // 先尝试获取所有training，然后在客户端筛选
+    const allTraining = await getTraining();
+    const training = allTraining.find(s => s.artcileId === artcileId);
     
-    console.log('Finding sector by artcileId:', artcileId, 'Found:', !!sector);
+    console.log('Finding training by artcileId:', artcileId, 'Found:', !!training);
     
-    return sector || null;
+    return training || null;
   } catch (error: any) {
-    console.error('Error fetching sector by ID:', {
+    console.error('Error fetching training by ID:', {
       message: error.message,
       status: error.response?.status,
       data: error.response?.data
@@ -1334,13 +1347,13 @@ export const getSectorByDocumentId = async (documentId: string, locale: string =
   }
 };
 
-// 根据articleId和语言获取对应的sector
-export const getSectorByArticleIdAndLanguage = async (artcileId: string, language: string): Promise<Sector | null> => {
+// 根据articleId和语言获取对应的training
+export const getTrainingByArticleIdAndLanguage = async (artcileId: string, language: string): Promise<Sector | null> => {
   try {
-    const sectors = await getSectors(undefined, language);
-    return sectors.find(sector => sector.artcileId === artcileId) || null;
+    const training = await getTraining(undefined, language);
+    return training.find(training => training.artcileId === artcileId) || null;
   } catch (error) {
-    console.error('Error fetching sector by articleId and language:', error);
+    console.error('Error fetching training by articleId and language:', error);
     return null;
   }
 };

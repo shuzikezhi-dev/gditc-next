@@ -5,7 +5,7 @@ import Layout from '../components/Layout';
 import SEOHead from '../components/SEOHead';
 import OptimizedImage from '../components/OptimizedImage';
 import AnimatedNumber from '../components/AnimatedNumber';
-import { getSectors, getHome } from '../lib/strapi';
+import { getTraining, getHome } from '../lib/strapi';
 import { t } from '../lib/translations';
 import { useLanguage } from './_app';
 
@@ -460,8 +460,8 @@ export const getStaticProps: GetStaticProps = async () => {
     
     // 并行获取所有数据
     const [sectorsEn, sectorsZh, homeData] = await Promise.all([
-      getSectors('Network', 'en'),
-      getSectors('Network', 'zh-Hans'),
+      getTraining('Network', 'en'),
+      getTraining('Network', 'zh-Hans'),
       getHome()
     ]);
 
@@ -484,11 +484,19 @@ export const getStaticProps: GetStaticProps = async () => {
       console.log('❌ No home data received');
     }
 
+    // 清理数据，确保所有locale字段不为undefined
+    const cleanSectors = (sectors: any[]) => {
+      return sectors?.map(sector => ({
+        ...sector,
+        locale: sector.locale || 'en'
+      })) || [];
+    };
+
     return {
       props: {
         sectors: {
-          en: sectorsEn || [],
-          'zh-Hans': sectorsZh || []
+          en: cleanSectors(sectorsEn),
+          'zh-Hans': cleanSectors(sectorsZh)
         },
         homeData: homeData || null,
       }

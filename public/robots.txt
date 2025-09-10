@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Sitemaps
+Sitemap: https://gditc.org/sitemap.xml
+
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1
+
+# Block admin and API paths
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /static/

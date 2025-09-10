@@ -5,8 +5,8 @@ export default function Redirect() {
   const router = useRouter();
 
   useEffect(() => {
-    // 重定向到英文首页
-    router.replace('/en');
+    // 重定向到首页
+    router.replace('/');
   }, [router]);
 
   return (

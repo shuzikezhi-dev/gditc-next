@@ -92,15 +92,13 @@ export class DetailPageService {
    */
   static getApiEndpoint(contentType: string): string {
     const typeMapping: { [key: string]: string } = {
-      'newsroom': 'newsrooms',
+      'certifications': 'certifications',
       'article': 'articles',
       'articles': 'articles',
-      'sector': 'sectors',
-      'sectors': 'sectors',
+      'training': 'training',
       'event': 'events',
       'events': 'events',
-      'resource': 'resources',
-      'resources': 'resources'
+      'standards': 'standards'
     };
     
     return typeMapping[contentType] || contentType;
@@ -350,11 +348,11 @@ export const getArticleDetail = (documentId: string, locale: string = 'en') =>
 export const getEventDetail = (documentId: string, locale: string = 'en') => 
   DetailPageService.getDetailContent('events', documentId, locale);
 
-export const getResourceDetail = (documentId: string, locale: string = 'en') => 
-  DetailPageService.getDetailContent('resources', documentId, locale);
+export const getStandardsDetail = (documentId: string, locale: string = 'en') => 
+  DetailPageService.getDetailContent('standards', documentId, locale);
 
-export const getNewsroomDetail = (documentId: string, locale: string = 'en') => 
-  DetailPageService.getDetailContent('newsroom', documentId, locale);
+export const getCertificationsDetail = (documentId: string, locale: string = 'en') => 
+  DetailPageService.getDetailContent('certifications', documentId, locale);
 
 // 列表获取函数（带语言筛选）
 export const getContentList = async (

@@ -58,15 +58,13 @@ export class DetailPageService {
    */
   static getApiEndpoint(contentType: string): string {
     const typeMapping: { [key: string]: string } = {
-      'newsroom': 'newsrooms',
+      'certifications': 'certifications',
       'article': 'articles',
       'articles': 'articles',
-      'sector': 'sectors',
-      'sectors': 'sectors',
+      'training': 'training',
       'event': 'events',
       'events': 'events',
-      'resource': 'resources',
-      'resources': 'resources'
+      'standards': 'standards'
     };
     
     return typeMapping[contentType] || contentType;

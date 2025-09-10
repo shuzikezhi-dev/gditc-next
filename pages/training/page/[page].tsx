@@ -3,29 +3,14 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Layout from '../../../components/Layout'
 import SEOHead from '../../../components/SEOHead'
-import { getEvents, Event as StrapiEvent } from '../../../lib/strapi'
+import { getTraining, Sector } from '../../../lib/strapi'
 import { useLanguage } from '../../_app'
 
-// 本地Event接口，用于组件内部
-interface Event {
-  id: number;
-  documentId: string | null;
-  title: string;
-  date: string;
-  content: string;
-  location: string | null;
-  type: string | null;
-  cover: {
-    url: string;
-    alternativeText: string | null;
-  } | null;
-}
-
-interface EventsPageProps {
-  events: Event[]
+interface SectorsPageProps {
+  sectors: Sector[]
   currentPage: number
   totalPages: number
-  totalEvents: number
+  totalSectors: number
   language: string
 }
 
@@ -127,54 +112,40 @@ const Pagination = ({
   )
 }
 
-export default function EventsPage({ 
-  events, 
+export default function SectorsPage({ 
+  sectors, 
   currentPage, 
   totalPages, 
-  totalEvents, 
+  totalSectors, 
   language 
-}: EventsPageProps) {
+}: SectorsPageProps) {
   const router = useRouter()
   const { language: currentLanguage } = useLanguage()
   
-  // 根据路由确定当前语言和基础路径
-  const isZhHans = router.asPath.includes('/zh-Hans/')
-  const isEn = router.asPath.includes('/en/')
-  const actualLanguage = isZhHans ? 'zh-Hans' : (isEn ? 'en' : currentLanguage)
-  const basePath = isZhHans ? '/zh-Hans/events/page' : (isEn ? '/en/events/page' : '/events/page')
+  // 固定为英文，不使用多语言路径
+  const actualLanguage = 'en'
+  const basePath = '/training/page'
 
   // 计算显示范围
-  const eventsPerPage = 12
-  const startIndex = (currentPage - 1) * eventsPerPage + 1
-  const endIndex = Math.min(currentPage * eventsPerPage, totalEvents)
+  const sectorsPerPage = 12
+  const startIndex = (currentPage - 1) * sectorsPerPage + 1
+  const endIndex = Math.min(currentPage * sectorsPerPage, totalSectors)
 
-  // 获取本地化文本
+  // 固定为英文文本
   const getText = (key: string) => {
     const texts = {
-      'en': {
-        title: 'Events',
-        description: 'Join our events, summits, and competitions to advance digital infrastructure standards',
-        noEventsFound: 'No events found',
-        noEventsDesc: 'Try selecting a different filter or check back later for updates.',
-        upcoming: 'Upcoming',
-        pastEvent: 'Past Event'
-      },
-      'zh-Hans': {
-        title: '活动',
-        description: '参加我们的活动、峰会和竞赛，推进数字基础设施标准',
-        noEventsFound: '暂无活动',
-        noEventsDesc: '请尝试选择不同的筛选条件或稍后查看更新。',
-        upcoming: '即将举行',
-        pastEvent: '已结束'
-      }
+      title: 'Training',
+      description: 'Explore our comprehensive training programs for digital infrastructure professionals',
+      noSectorsFound: 'No training programs found',
+      noSectorsDesc: 'Try selecting a different filter or check back later for updates.'
     }
-    return texts[actualLanguage as keyof typeof texts]?.[key as keyof typeof texts['en']] || texts['en'][key as keyof typeof texts['en']]
+    return texts[key as keyof typeof texts] || texts.title
   }
 
   // 格式化日期显示
   const formatDate = (dateString: string) => {
     try {
-      return new Date(dateString).toLocaleDateString(actualLanguage === 'zh-Hans' ? 'zh-CN' : 'en-US', {
+      return new Date(dateString).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -184,11 +155,17 @@ export default function EventsPage({
     }
   }
 
+  // 处理富文本内容，提取纯文本用于预览
+  const extractTextFromContent = (content: string) => {
+    if (!content) return ''
+    return content.replace(/<[^>]*>/g, '').trim()
+  }
+
   return (
     <>
       <SEOHead
-        title={`${getText('title')} - ${actualLanguage === 'zh-Hans' ? `第${currentPage}页` : `Page ${currentPage}`}`}
-        description={getText('description')}
+        title={`${getText('title')} - Page ${currentPage}`}
+        description={`DITC ${getText('description')}`}
         canonical={`https://gditc.org${basePath}/${currentPage}`}
       />
       <Layout>
@@ -203,16 +180,13 @@ export default function EventsPage({
                     {getText('title')}
                   </h1>
                   <p className="mb-5 text-base text-body-color dark:text-dark-6">
-                    {getText('description')}
+                    DITC {getText('description')}
                   </p>
 
-                  {/* 活动统计信息 */}
-                  {totalEvents > 0 && (
+                  {/* 培训统计信息 */}
+                  {totalSectors > 0 && (
                     <div className="mb-6 text-sm text-body-color dark:text-dark-6">
-                      {actualLanguage === 'zh-Hans' 
-                        ? `共 ${totalEvents} 个活动 | 显示 ${startIndex}-${endIndex} 个`
-                        : `Showing ${startIndex}-${endIndex} of ${totalEvents} Events`
-                      }
+                      Showing {startIndex}-{endIndex} of {totalSectors} Training Programs
                     </div>
                   )}
                 </div>
@@ -221,44 +195,39 @@ export default function EventsPage({
           </div>
         </div>
 
-        {/* Events List */}
+        {/* Main Content */}
         <section className="pt-20 pb-10 lg:pt-[120px] lg:pb-20 dark:bg-dark">
           <div className="container mx-auto px-4">
-            {events.length > 0 ? (
+            {sectors.length > 0 ? (
               <>
                 <div className="flex flex-wrap -mx-4">
-                  {events.map((event, index) => (
-                    <div key={event.documentId || event.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
+                  {sectors.map((sector, index) => (
+                    <div key={sector.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
                       <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
                         <div className="mb-8 overflow-hidden rounded-[5px]">
-                          <Link href={`/events/${event.documentId || event.id}`} className="block">
+                          <Link href={`/training/${sector.documentId || sector.id}`} className="block">
                             <img
-                              src={event.cover?.url || '/images/blog/blog-01.jpg'}
-                              alt={event.cover?.alternativeText || event.title}
+                              src={sector.cover?.url || '/images/blog/blog-01.jpg'}
+                              alt={sector.title}
                               className="w-full h-48 object-cover transition group-hover:rotate-6 group-hover:scale-125"
                             />
                           </Link>
                         </div>
                         <div>
                           <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
-                            {formatDate(event.date)}
+                            {formatDate(sector.publishedAt || sector.date)}
                           </span>
                           <h3>
                             <Link
-                              href={`/events/${event.documentId || event.id}`}
-                              className={`inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title ${actualLanguage === 'zh-Hans' ? 'zh' : 'en'}`}
+                              href={`/training/${sector.documentId || sector.id}`}
+                              className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title"
                             >
-                              {event.title}
+                              {sector.title}
                             </Link>
                           </h3>
-                          <p className={`max-w-[370px] text-base text-body-color dark:text-dark-6 mb-4 article-description ${actualLanguage === 'zh-Hans' ? 'zh' : 'en'}`}>
-                            {event.content}
+                          <p className="max-w-[370px] text-base text-body-color dark:text-dark-6 article-description">
+                            {extractTextFromContent(sector.descript || sector.content)}
                           </p>
-                          {event.location && (
-                            <p className="text-sm text-body-color dark:text-dark-6 mb-2">
-                              📍 {event.location}
-                            </p>
-                          )}
                         </div>
                       </div>
                     </div>
@@ -276,10 +245,10 @@ export default function EventsPage({
             ) : (
               <div className="text-center py-20">
                 <h3 className="text-xl font-semibold text-dark dark:text-white mb-4">
-                  {getText('noEventsFound')}
+                  {getText('noSectorsFound')}
                 </h3>
                 <p className="text-body-color dark:text-dark-6">
-                  {getText('noEventsDesc')}
+                  {getText('noSectorsDesc')}
                 </p>
               </div>
             )}
@@ -292,45 +261,24 @@ export default function EventsPage({
 
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
-    console.log('🔄 开始生成 Events 静态路径...')
-    
-    // 获取所有活动数据来计算总页数
-    const [eventsEn, eventsZh] = await Promise.all([
-      getEvents(undefined, 'en'),
-      getEvents(undefined, 'zh-Hans')
-    ])
+    // 只获取英文数据来计算总页数
+    const sectorsEn = await getTraining(undefined, 'en')
 
-    console.log(`📊 Events 数据统计:`, {
-      eventsEn: eventsEn.length,
-      eventsZh: eventsZh.length
-    })
-
-    const eventsPerPage = 12
-    const totalPagesEn = Math.ceil(eventsEn.length / eventsPerPage)
-    const totalPagesZh = Math.ceil(eventsZh.length / eventsPerPage)
-    const maxPages = Math.max(totalPagesEn, totalPagesZh)
-
-    console.log(`📄 分页计算:`, {
-      eventsPerPage,
-      totalPagesEn,
-      totalPagesZh,
-      maxPages
-    })
+    const sectorsPerPage = 12
+    const totalPages = Math.ceil(sectorsEn.length / sectorsPerPage)
 
     // 生成所有页面路径
     const paths = []
-    for (let page = 1; page <= maxPages; page++) {
+    for (let page = 1; page <= totalPages; page++) {
       paths.push({ params: { page: page.toString() } })
     }
-
-    console.log(`✅ 生成 ${paths.length} 个静态路径`)
 
     return {
       paths,
       fallback: false
     }
   } catch (error) {
-    console.error('❌ 生成Events分页路径失败:', error)
+    console.error('生成Training分页路径失败:', error)
     return {
       paths: [{ params: { page: '1' } }],
       fallback: false
@@ -338,82 +286,42 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getStaticProps: GetStaticProps<EventsPageProps> = async ({ params }) => {
+export const getStaticProps: GetStaticProps<SectorsPageProps> = async ({ params }) => {
   try {
     const page = parseInt(params?.page as string) || 1
-    const eventsPerPage = 12
+    const sectorsPerPage = 12
 
-    console.log(`🔄 生成 Events 页面数据 - 第 ${page} 页`)
+    // 只获取英文数据
+    const sectorsEn = await getTraining(undefined, 'en')
 
-    // 获取所有活动数据
-    const [eventsEn, eventsZh] = await Promise.all([
-      getEvents(undefined, 'en'),
-      getEvents(undefined, 'zh-Hans')
-    ])
-
-    console.log(`📊 获取到的 Events 数据:`, {
-      eventsEn: eventsEn.length,
-      eventsZh: eventsZh.length,
-      page
-    })
-
-    // 转换数据格式
-    const formatEvents = (events: StrapiEvent[]): Event[] => {
-      return events.map((event: StrapiEvent, index: number) => ({
-        id: event.id || index + 1,
-        documentId: event.documentId || null,
-        title: event.title,
-        date: event.date,
-        content: event.content || '',
-        location: event.location || null,
-        type: event.type || null,
-        cover: event.cover ? {
-          url: event.cover.url,
-          alternativeText: event.cover.alternativeText || null
-        } : null
-      }))
-    }
-
-    const cleanedEventsEn = formatEvents(eventsEn)
-    const cleanedEventsZh = formatEvents(eventsZh)
-
-    // 默认使用英文数据
-    const allEvents = cleanedEventsEn.length > 0 ? cleanedEventsEn : cleanedEventsZh
+    // 使用英文数据
+    const allSectors = sectorsEn
     
     // 计算分页数据
-    const totalEvents = allEvents.length
-    const totalPages = Math.ceil(totalEvents / eventsPerPage)
-    const startIndex = (page - 1) * eventsPerPage
-    const endIndex = startIndex + eventsPerPage
-    const pageEvents = allEvents.slice(startIndex, endIndex)
-
-    console.log(`📄 分页数据计算:`, {
-      totalEvents,
-      totalPages,
-      startIndex,
-      endIndex,
-      pageEventsCount: pageEvents.length,
-      eventsPerPage
-    })
+    const totalSectors = allSectors.length
+    const totalPages = Math.ceil(totalSectors / sectorsPerPage)
+    const startIndex = (page - 1) * sectorsPerPage
+    const endIndex = startIndex + sectorsPerPage
+    const pageSectors = allSectors.slice(startIndex, endIndex)
 
     return {
       props: {
-        events: pageEvents,
+        sectors: pageSectors,
         currentPage: page,
         totalPages,
-        totalEvents,
+        totalSectors,
         language: 'en'
       }
     }
   } catch (error) {
-    console.error('❌ 生成Events分页数据失败:', error)
+    console.error('生成Training分页数据失败:', error)
     
     return {
       props: {
-        events: [],
+        sectors: [],
         currentPage: 1,
         totalPages: 1,
-        totalEvents: 0,
+        totalSectors: 0,
         language: 'en'
       }
     }

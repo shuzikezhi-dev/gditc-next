@@ -1,0 +1,17 @@
+{
+  "totalUrls": 16,
+  "generatedAt": "2025-09-08T07:00:32.039Z",
+  "languages": [
+    "en",
+    "zh-Hans"
+  ],
+  "urlTypes": {
+    "static": 9,
+    "dynamic": 7
+  },
+  "priorities": {
+    "high": 12,
+    "medium": 4,
+    "low": 0
+  }
+}

@@ -3,29 +3,27 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Layout from '../../../components/Layout'
 import SEOHead from '../../../components/SEOHead'
-import { getEvents, Event as StrapiEvent } from '../../../lib/strapi'
+import { getStandards } from '../../../lib/strapi'
 import { useLanguage } from '../../_app'
 
-// 本地Event接口，用于组件内部
-interface Event {
+interface Resource {
   id: number;
-  documentId: string | null;
+  documentId: string;
+  type: string;
   title: string;
-  date: string;
-  content: string;
-  location: string | null;
-  type: string | null;
-  cover: {
-    url: string;
-    alternativeText: string | null;
-  } | null;
+  description: string;
+  downloadUrl: string;
+  publishDate: string;
+  fileSize: string;
+  format: string;
+  cover: string;
 }
 
-interface EventsPageProps {
-  events: Event[]
+interface ResourcesPageProps {
+  resources: Resource[]
   currentPage: number
   totalPages: number
-  totalEvents: number
+  totalResources: number
   language: string
 }
 
@@ -127,72 +125,44 @@ const Pagination = ({
   )
 }
 
-export default function EventsPage({ 
-  events, 
+export default function ResourcesPage({ 
+  resources, 
   currentPage, 
   totalPages, 
-  totalEvents, 
+  totalResources, 
   language 
-}: EventsPageProps) {
+}: ResourcesPageProps) {
   const router = useRouter()
   const { language: currentLanguage } = useLanguage()
   
-  // 根据路由确定当前语言和基础路径
-  const isZhHans = router.asPath.includes('/zh-Hans/')
-  const isEn = router.asPath.includes('/en/')
-  const actualLanguage = isZhHans ? 'zh-Hans' : (isEn ? 'en' : currentLanguage)
-  const basePath = isZhHans ? '/zh-Hans/events/page' : (isEn ? '/en/events/page' : '/events/page')
+  // 固定为英文，不使用多语言路径
+  const actualLanguage = 'en'
+  const basePath = '/standards/page'
 
   // 计算显示范围
-  const eventsPerPage = 12
-  const startIndex = (currentPage - 1) * eventsPerPage + 1
-  const endIndex = Math.min(currentPage * eventsPerPage, totalEvents)
+  const resourcesPerPage = 12
+  const startIndex = (currentPage - 1) * resourcesPerPage + 1
+  const endIndex = Math.min(currentPage * resourcesPerPage, totalResources)
 
-  // 获取本地化文本
-  const getText = (key: string) => {
-    const texts = {
-      'en': {
-        title: 'Events',
-        description: 'Join our events, summits, and competitions to advance digital infrastructure standards',
-        noEventsFound: 'No events found',
-        noEventsDesc: 'Try selecting a different filter or check back later for updates.',
-        upcoming: 'Upcoming',
-        pastEvent: 'Past Event'
-      },
-      'zh-Hans': {
-        title: '活动',
-        description: '参加我们的活动、峰会和竞赛，推进数字基础设施标准',
-        noEventsFound: '暂无活动',
-        noEventsDesc: '请尝试选择不同的筛选条件或稍后查看更新。',
-        upcoming: '即将举行',
-        pastEvent: '已结束'
-      }
-    }
-    return texts[actualLanguage as keyof typeof texts]?.[key as keyof typeof texts['en']] || texts['en'][key as keyof typeof texts['en']]
-  }
-
-  // 格式化日期显示
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString(actualLanguage === 'zh-Hans' ? 'zh-CN' : 'en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    } catch (error) {
-      return dateString
-    }
+  // 格式化日期
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return ''
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    })
   }
 
   return (
     <>
       <SEOHead
-        title={`${getText('title')} - ${actualLanguage === 'zh-Hans' ? `第${currentPage}页` : `Page ${currentPage}`}`}
-        description={getText('description')}
+        title={`Standards - Page ${currentPage}`}
+        description="Explore our digital infrastructure standards and technical specifications"
         canonical={`https://gditc.org${basePath}/${currentPage}`}
       />
       <Layout>
-        {/* Banner Section */}
+        {/* Banner */}
         <div className="relative z-10 overflow-hidden pt-[120px] pb-[60px] md:pt-[130px] lg:pt-[160px] dark:bg-dark">
           <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-stroke/0 via-stroke dark:via-dark-3 to-stroke/0"></div>
           <div className="container mx-auto px-4">
@@ -200,19 +170,16 @@ export default function EventsPage({
               <div className="w-full px-4">
                 <div className="text-center">
                   <h1 className="mb-4 text-3xl font-bold text-dark dark:text-white sm:text-4xl md:text-[40px] md:leading-[1.2]">
-                    {getText('title')}
+                    Standards
                   </h1>
                   <p className="mb-5 text-base text-body-color dark:text-dark-6">
-                    {getText('description')}
+                    Explore our digital infrastructure standards and technical specifications
                   </p>
 
-                  {/* 活动统计信息 */}
-                  {totalEvents > 0 && (
+                  {/* 标准统计信息 */}
+                  {totalResources > 0 && (
                     <div className="mb-6 text-sm text-body-color dark:text-dark-6">
-                      {actualLanguage === 'zh-Hans' 
-                        ? `共 ${totalEvents} 个活动 | 显示 ${startIndex}-${endIndex} 个`
-                        : `Showing ${startIndex}-${endIndex} of ${totalEvents} Events`
-                      }
+                      Showing {startIndex}-{endIndex} of {totalResources} Standards
                     </div>
                   )}
                 </div>
@@ -221,43 +188,55 @@ export default function EventsPage({
           </div>
         </div>
 
-        {/* Events List */}
+        {/* Resources Grid */}
         <section className="pt-20 pb-10 lg:pt-[120px] lg:pb-20 dark:bg-dark">
           <div className="container mx-auto px-4">
-            {events.length > 0 ? (
+            {resources.length > 0 ? (
               <>
                 <div className="flex flex-wrap -mx-4">
-                  {events.map((event, index) => (
-                    <div key={event.documentId || event.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
+                  {resources.map((resource, index) => (
+                    <div key={resource.id} className="w-full px-4 md:w-1/2 lg:w-1/3">
                       <div className="mb-10 wow fadeInUp group" data-wow-delay={`.${(index % 3 + 1) * 5}s`}>
                         <div className="mb-8 overflow-hidden rounded-[5px]">
-                          <Link href={`/events/${event.documentId || event.id}`} className="block">
+                          <Link href={`/standards/${resource.documentId}`} className="block">
                             <img
-                              src={event.cover?.url || '/images/blog/blog-01.jpg'}
-                              alt={event.cover?.alternativeText || event.title}
+                              src={resource.cover}
+                              alt={resource.title}
                               className="w-full h-48 object-cover transition group-hover:rotate-6 group-hover:scale-125"
                             />
                           </Link>
                         </div>
                         <div>
                           <span className="inline-block px-4 py-0.5 mb-6 text-xs font-medium leading-loose text-center text-white rounded-[5px] bg-primary">
-                            {formatDate(event.date)}
+                            {formatDate(resource.publishDate)}
                           </span>
                           <h3>
                             <Link
-                              href={`/events/${event.documentId || event.id}`}
-                              className={`inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title ${actualLanguage === 'zh-Hans' ? 'zh' : 'en'}`}
+                              href={`/standards/${resource.documentId}`}
+                              className="inline-block mb-4 text-xl font-semibold text-dark dark:text-white hover:text-primary dark:hover:text-primary sm:text-2xl lg:text-xl xl:text-2xl article-title"
                             >
-                              {event.title}
+                              {resource.title}
                             </Link>
                           </h3>
-                          <p className={`max-w-[370px] text-base text-body-color dark:text-dark-6 mb-4 article-description ${actualLanguage === 'zh-Hans' ? 'zh' : 'en'}`}>
-                            {event.content}
+                          <p className="max-w-[370px] text-base text-body-color dark:text-dark-6 mb-4 article-description">
+                            {resource.description}
                           </p>
-                          {event.location && (
-                            <p className="text-sm text-body-color dark:text-dark-6 mb-2">
-                              📍 {event.location}
-                            </p>
+                          
+                          {/* 下载按钮 */}
+                          {resource.downloadUrl && resource.downloadUrl !== '#' && (
+                            <div className="flex items-center gap-3">
+                              <a
+                                href={resource.downloadUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-primary rounded-md hover:bg-primary/90 transition-colors"
+                              >
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Download
+                              </a>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -276,10 +255,10 @@ export default function EventsPage({
             ) : (
               <div className="text-center py-20">
                 <h3 className="text-xl font-semibold text-dark dark:text-white mb-4">
-                  {getText('noEventsFound')}
+                  No Standards Found
                 </h3>
                 <p className="text-body-color dark:text-dark-6">
-                  {getText('noEventsDesc')}
+                  Try selecting a different category or check back later for updates.
                 </p>
               </div>
             )}
@@ -292,45 +271,23 @@ export default function EventsPage({
 
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
-    console.log('🔄 开始生成 Events 静态路径...')
-    
-    // 获取所有活动数据来计算总页数
-    const [eventsEn, eventsZh] = await Promise.all([
-      getEvents(undefined, 'en'),
-      getEvents(undefined, 'zh-Hans')
-    ])
-
-    console.log(`📊 Events 数据统计:`, {
-      eventsEn: eventsEn.length,
-      eventsZh: eventsZh.length
-    })
-
-    const eventsPerPage = 12
-    const totalPagesEn = Math.ceil(eventsEn.length / eventsPerPage)
-    const totalPagesZh = Math.ceil(eventsZh.length / eventsPerPage)
-    const maxPages = Math.max(totalPagesEn, totalPagesZh)
-
-    console.log(`📄 分页计算:`, {
-      eventsPerPage,
-      totalPagesEn,
-      totalPagesZh,
-      maxPages
-    })
+    // 从API获取真实数据来计算总页数
+    const standards = await getStandards()
+    const resourcesPerPage = 12
+    const totalPages = Math.ceil(standards.length / resourcesPerPage)
 
     // 生成所有页面路径
     const paths = []
-    for (let page = 1; page <= maxPages; page++) {
+    for (let page = 1; page <= totalPages; page++) {
       paths.push({ params: { page: page.toString() } })
     }
-
-    console.log(`✅ 生成 ${paths.length} 个静态路径`)
 
     return {
       paths,
       fallback: false
     }
   } catch (error) {
-    console.error('❌ 生成Events分页路径失败:', error)
+    console.error('生成Standards分页路径失败:', error)
     return {
       paths: [{ params: { page: '1' } }],
       fallback: false
@@ -338,82 +295,53 @@ export const getStaticPaths: GetStaticPaths = async () => {
   }
 }
 
-export const getStaticProps: GetStaticProps<EventsPageProps> = async ({ params }) => {
+export const getStaticProps: GetStaticProps<ResourcesPageProps> = async ({ params }) => {
   try {
     const page = parseInt(params?.page as string) || 1
-    const eventsPerPage = 12
+    const resourcesPerPage = 12
 
-    console.log(`🔄 生成 Events 页面数据 - 第 ${page} 页`)
-
-    // 获取所有活动数据
-    const [eventsEn, eventsZh] = await Promise.all([
-      getEvents(undefined, 'en'),
-      getEvents(undefined, 'zh-Hans')
-    ])
-
-    console.log(`📊 获取到的 Events 数据:`, {
-      eventsEn: eventsEn.length,
-      eventsZh: eventsZh.length,
-      page
-    })
-
-    // 转换数据格式
-    const formatEvents = (events: StrapiEvent[]): Event[] => {
-      return events.map((event: StrapiEvent, index: number) => ({
-        id: event.id || index + 1,
-        documentId: event.documentId || null,
-        title: event.title,
-        date: event.date,
-        content: event.content || '',
-        location: event.location || null,
-        type: event.type || null,
-        cover: event.cover ? {
-          url: event.cover.url,
-          alternativeText: event.cover.alternativeText || null
-        } : null
-      }))
-    }
-
-    const cleanedEventsEn = formatEvents(eventsEn)
-    const cleanedEventsZh = formatEvents(eventsZh)
-
-    // 默认使用英文数据
-    const allEvents = cleanedEventsEn.length > 0 ? cleanedEventsEn : cleanedEventsZh
+    // 从API获取真实数据
+    const standards = await getStandards()
+    
+    // 转换数据格式以匹配Resource接口
+    const allResources: Resource[] = standards.map((standard: any) => ({
+      id: standard.id,
+      documentId: standard.documentId,
+      type: standard.type || 'standard',
+      title: standard.title,
+      description: standard.content || standard.description || '',
+      downloadUrl: standard.attachments?.url || '#',
+      publishDate: standard.publishedAt || standard.createdAt,
+      fileSize: 'N/A',
+      format: 'PDF',
+      cover: standard.cover?.url || '/images/blog/blog-01.jpg'
+    }))
     
     // 计算分页数据
-    const totalEvents = allEvents.length
-    const totalPages = Math.ceil(totalEvents / eventsPerPage)
-    const startIndex = (page - 1) * eventsPerPage
-    const endIndex = startIndex + eventsPerPage
-    const pageEvents = allEvents.slice(startIndex, endIndex)
-
-    console.log(`📄 分页数据计算:`, {
-      totalEvents,
-      totalPages,
-      startIndex,
-      endIndex,
-      pageEventsCount: pageEvents.length,
-      eventsPerPage
-    })
+    const totalResources = allResources.length
+    const totalPages = Math.ceil(totalResources / resourcesPerPage)
+    const startIndex = (page - 1) * resourcesPerPage
+    const endIndex = startIndex + resourcesPerPage
+    const pageResources = allResources.slice(startIndex, endIndex)
 
     return {
       props: {
-        events: pageEvents,
+        resources: pageResources,
         currentPage: page,
         totalPages,
-        totalEvents,
+        totalResources,
         language: 'en'
       }
     }
   } catch (error) {
-    console.error('❌ 生成Events分页数据失败:', error)
+    console.error('生成Standards分页数据失败:', error)
     
     return {
       props: {
-        events: [],
+        resources: [],
         currentPage: 1,
         totalPages: 1,
-        totalEvents: 0,
+        totalResources: 0,
         language: 'en'
       }
     }

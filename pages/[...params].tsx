@@ -1,6 +1,6 @@
 import { GetStaticProps, GetStaticPaths } from 'next';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Layout from '../components/Layout';
 import SEOHead from '../components/SEOHead';
 import { useLanguage } from './_app';
@@ -30,6 +30,35 @@ export default function DetailPage({
   const { language } = useLanguage();
   const [content, setContent] = useState(initialContent);
   const [loading, setLoading] = useState(false);
+
+  // 将常见 Markdown 语法转为 HTML（最小实现：图片、链接、换行与段落）
+  const convertMarkdownToHtml = (markdown: string): string => {
+    if (!markdown) return '';
+    let html = markdown;
+    // 图片: ![alt](url)
+    html = html.replace(
+      /!\[([^\]]*)\]\(([^\)]+)\)/g,
+      '<img src="$2" alt="$1" style="max-width:100%;height:auto;display:block;margin:0 auto;" loading="lazy" />'
+    );
+    // 链接: [text](url)
+    html = html.replace(/\[([^\]]+)\]\(([^\)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    // 将两个以上换行视为新段落
+    html = html.replace(/\n{2,}/g, '</p><p>');
+    // 将单换行转为 <br/>
+    html = html.replace(/\n/g, '<br/>');
+    // 包一层段落，避免裸文本
+    if (!/^\s*<p[>\s]/i.test(html)) {
+      html = `<p>${html}</p>`;
+    }
+    return html;
+  };
+
+  // 预处理正文：若包含 Markdown 图片/链接语法，则先转换为 HTML
+  const htmlContent = useMemo(() => {
+    const raw = content.content || '';
+    const looksLikeMarkdown = /!\[[^\]]*\]\([^\)]+\)|\[[^\]]+\]\([^\)]+\)/.test(raw);
+    return looksLikeMarkdown ? convertMarkdownToHtml(raw) : raw;
+  }, [content.content]);
 
   // 获取相关文章
   const currentLocale = language === 'zh-Hans' ? 'zh-Hans' : 'en';
@@ -242,7 +271,7 @@ export default function DetailPage({
                 <div className="prose prose-lg max-w-none dark:prose-invert mb-10 wow fadeInUp text-justify" data-wow-delay=".1s" style={{ textAlign: 'justify' }}>
                   {content.content ? (
                     <div 
-                      dangerouslySetInnerHTML={{ __html: content.content }} 
+                      dangerouslySetInnerHTML={{ __html: htmlContent }} 
                       className="text-justify"
                       style={{ textAlign: 'justify', lineHeight: '1.7' }}
                     />
@@ -460,7 +489,7 @@ export default function DetailPage({
 export const getStaticPaths: GetStaticPaths = async () => {
   try {
     const paths: any[] = [];
-    const validChannels = ['articles', 'sectors', 'events', 'resources', 'newsroom'];
+    const validChannels = ['articles', 'training', 'events', 'standards', 'certifications'];
     const locales = ['en', 'zh-Hans'];
     
     // 为每个内容类型和语言获取记录来生成路径
@@ -514,7 +543,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     
     return {
       paths,
-      fallback: 'blocking', // 允许新内容的增量生成
+      fallback: false,
     };
   } catch (error) {
     console.error('Error in getStaticPaths:', error);
@@ -525,7 +554,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
         { params: { params: ['en', 'sectors', 'wt9v3cvkbqgpp4z2cj902ect'] } },
         { params: { params: ['zh-Hans', 'sectors', 'wt9v3cvkbqgpp4z2cj902ect'] } },
       ],
-      fallback: 'blocking',
+      fallback: false,
     };
   }
 };
@@ -553,7 +582,7 @@ export const getStaticProps: GetStaticProps<DetailPageProps> = async ({ params }
     }
 
     // 验证channelType
-    const validChannels = ['articles', 'sectors', 'events', 'resources', 'newsroom'];
+    const validChannels = ['articles', 'training', 'events', 'standards', 'certifications'];
     if (!validChannels.includes(channelType)) {
       return {
         notFound: true,

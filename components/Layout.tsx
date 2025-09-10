@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import LanguageSwitcher from './LanguageSwitcher';
 import { t } from '../lib/translations';
 import { useLanguage } from '../pages/_app';
 
@@ -12,36 +11,17 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);
   const router = useRouter();
-  const { language } = useLanguage();
 
-  // 根据语言生成正确的路径前缀
-  const getLocalizedPath = (path: string) => {
-    // 如果是首页，根据语言返回对应路径
-    if (path === '/') {
-      return language === 'en' ? '/' : `/${language}`;
-    }
-    // 其他页面添加语言前缀
-    return language === 'en' ? path : `/${language}${path}`;
-  };
-
-  // 导航菜单项 - 删除News，只保留Newsroom
+  // 导航菜单项 - 更新为新的栏目名称
   const navigationItems = [
-    { href: getLocalizedPath('/'), label: t(language, 'navigation.home'), key: 'home' },
-    { href: getLocalizedPath('/about'), label: t(language, 'navigation.about'), key: 'about' },
-    { href: getLocalizedPath('/sectors'), label: t(language, 'navigation.sectors'), key: 'sectors' },
-    { href: getLocalizedPath('/ActivitiesAndServices'), label: t(language, 'navigation.activitiesServices'), key: 'activities' },
-    { href: getLocalizedPath('/events'), label: t(language, 'navigation.events'), key: 'events' },
-    { href: getLocalizedPath('/newsroom'), label: t(language, 'navigation.newsroom'), key: 'newsroom' },
-    { href: getLocalizedPath('/join-us'), label: t(language, 'navigation.joinUs'), key: 'joinUs' },
-  ];
-
-  // Resources下拉菜单项
-  const resourcesItems = [
-    { href: getLocalizedPath('/resources?type=white-papers'), label: t(language, 'navigation.resourcesMenu.whitePapers') },
-    { href: getLocalizedPath('/resources?type=technical-reports'), label: t(language, 'navigation.resourcesMenu.technicalReports') },
-    { href: getLocalizedPath('/resources?type=case-studies'), label: t(language, 'navigation.resourcesMenu.caseStudies') },
+    { href: '/', label: 'Home', key: 'home' },
+    { href: '/about', label: 'About', key: 'about' },
+    { href: '/training', label: 'Training', key: 'training' },
+    { href: '/events', label: 'Events', key: 'events' },
+    { href: '/certifications', label: 'Certifications', key: 'certifications' },
+    { href: '/standards', label: 'Standards', key: 'standards' },
+    { href: '/join-us', label: 'Join Us', key: 'joinUs' },
   ];
 
   // 社交媒体链接
@@ -71,19 +51,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
-      {/* 语言切换栏 - 修改样式 */}
-      <LanguageSwitcher 
-        isDarkMode={isDarkMode}
-        onToggleDarkMode={toggleDarkMode}
-      />
-      
       {/* 主导航栏 */}
-      <header className="fixed top-8 left-0 z-40 w-full bg-white/90 backdrop-blur-sm shadow-sm dark:bg-dark/90">
+      <header className="fixed top-0 left-0 z-40 w-full bg-white/90 backdrop-blur-sm shadow-sm dark:bg-dark/90">
         <nav className="container mx-auto px-4">
           <div className="flex items-center justify-between py-4">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href={getLocalizedPath('/')} className="flex items-center space-x-3">
+              <Link href="/" className="flex items-center space-x-3">
                 <img 
                   src="/logo_ditc.png" 
                   alt="DITC Logo" 
@@ -108,38 +82,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Link>
               ))}
               
-              {/* Resources 下拉菜单 */}
-              <div 
-                className="relative group"
-                onMouseEnter={() => setIsResourcesDropdownOpen(true)}
-                onMouseLeave={() => setIsResourcesDropdownOpen(false)}
-              >
-                <button 
-                  className={`flex items-center font-medium transition-colors dark:hover:text-primary ${
-                    isActiveRoute('/resources') 
-                      ? 'text-gray-600 dark:text-gray-400' // 当前页面是灰色
-                      : 'text-gray-900 hover:text-primary dark:text-white dark:hover:text-primary' // 其他页面是黑色/白色
-                  }`}
-                >
-                  {t(language, 'navigation.resources')}
-                  <svg className="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {isResourcesDropdownOpen && (
-                  <div className="absolute top-full left-0 w-48 bg-white rounded-lg shadow-lg dark:bg-dark-2 border border-gray-200 dark:border-gray-700">
-                    {resourcesItems.map((item) => (
-                      <Link 
-                        key={item.href}
-                        href={item.href}
-                        className="block px-4 py-3 text-gray-700 hover:text-primary hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800 first:rounded-t-lg last:rounded-b-lg transition-colors"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* 右侧控制按钮 */}
@@ -171,22 +113,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </Link>
               ))}
               
-              {/* 移动端Resources菜单 */}
-              <div className="border-t pt-2 mt-2">
-                <div className="pb-2 text-gray-700 dark:text-gray-300 font-medium">
-                  {t(language, 'navigation.resources')}
-                </div>
-                {resourcesItems.map((item) => (
-                  <Link 
-                    key={item.href}
-                    href={item.href}
-                    className="block py-2 pl-4 text-gray-700 hover:text-primary dark:text-gray-300"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
             </div>
           )}
         </nav>
@@ -203,7 +129,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* First Row: Logo Only */}
           <div className="flex flex-wrap -mx-4 mb-8">
             <div className="w-full px-4">
-              <Link href={getLocalizedPath('/')} className="mb-6 inline-flex items-center space-x-3">
+              <Link href="/" className="mb-6 inline-flex items-center space-x-3">
                 <img src="/logo_dark.png" alt="DITC logo" className="h-12 w-auto" />
                 <span className="text-2xl font-bold text-white">DIGITAL INFRASTRUCTURE TECHNICAL COUNCIL</span>
               </Link>
@@ -238,12 +164,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
                 {/* Newsletter Section - Hidden */}
                 <div className="mt-8 hidden">
-                  <h3 className="text-lg font-semibold text-white mb-6">{t(language, 'footer.stayUpdated')}</h3>
+                  <h3 className="text-lg font-semibold text-white mb-6">Stay Updated</h3>
                   <form className="newsletter-form mb-4">
                     <div className="relative">
                       <input 
                         type="email" 
-                        placeholder={t(language, 'footer.emailPlaceholder')} 
+                        placeholder="Enter your email" 
                         required 
                         className="w-full pl-3 pr-20 py-2 bg-transparent text-white border border-gray-600 rounded-md focus:border-primary focus:outline-none placeholder:text-gray-300 text-sm" 
                       />
@@ -251,11 +177,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                         type="submit" 
                         className="absolute right-1 top-1/2 -translate-y-1/2 px-3 py-1 text-white bg-primary rounded hover:bg-blue-dark transition duration-300 text-xs"
                       >
-                        {t(language, 'footer.subscribe')}
+                        Subscribe
                       </button>
                     </div>
                   </form>
-                  <p className="small-text text-xs text-white">{t(language, 'footer.subscribeText')}</p>
+                  <p className="small-text text-xs text-white">Subscribe to our newsletter for the latest updates</p>
                 </div>
               </div>
             </div>
@@ -266,31 +192,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Column 2: Quick Links */}
                 <div className="footer-section w-full px-4 sm:w-1/2 md:w-1/2 lg:w-1/3">
                   <div className="w-full mb-10">
-                    <h3 className="text-lg font-semibold text-white mb-9">{t(language, 'footer.quickLinks')}</h3>
+                    <h3 className="text-lg font-semibold text-white mb-9">Quick Links</h3>
                     <ul>
                       <li>
                         <Link href="/about" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.quickLinksItems.aboutDitc')}
+                          About DITC
                         </Link>
                       </li>
                       <li>
                         <Link href="/join-us" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.quickLinksItems.membership')}
+                          Membership
                         </Link>
                       </li>
                       <li>
-                        <Link href="/resources" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.quickLinksItems.standardsPublications')}
+                        <Link href="/standards" className="inline-block mb-3 text-base text-white hover:text-primary">
+                          Standards & Publications
                         </Link>
                       </li>
                       <li>
                         <Link href="/events" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.quickLinksItems.eventsConferences')}
+                          Events & Conferences
                         </Link>
                       </li>
                       <li>
-                        <Link href="/newsroom" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.quickLinksItems.newsroom')}
+                        <Link href="/certifications" className="inline-block mb-3 text-base text-white hover:text-primary">
+                          Certifications
                         </Link>
                       </li>
                     </ul>
@@ -300,31 +226,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Column 3: Resources */}
                 <div className="footer-section w-full px-4 sm:w-1/2 md:w-1/2 lg:w-1/3">
                   <div className="w-full mb-10">
-                    <h3 className="text-lg font-semibold text-white mb-9">{t(language, 'navigation.resources')}</h3>
+                    <h3 className="text-lg font-semibold text-white mb-9">Resources</h3>
                     <ul>
                       <li>
-                        <Link href="/resources" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.resourcesItems.documentLibrary')}
+                        <Link href="/standards" className="inline-block mb-3 text-base text-white hover:text-primary">
+                          Document Library
                         </Link>
                       </li>
                       <li>
-                        <Link href="/activities-services" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.resourcesItems.certificationPrograms')}
+                        <Link href="/certifications" className="inline-block mb-3 text-base text-white hover:text-primary">
+                          Certification Programs
                         </Link>
                       </li>
                       <li>
-                        <Link href="/sectors" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.resourcesItems.technicalCommittees')}
+                        <Link href="/training" className="inline-block mb-3 text-base text-white hover:text-primary">
+                          Technical Committees
                         </Link>
                       </li>
                       <li>
                         <a href="#" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.resourcesItems.faqs')}
+                          FAQs
                         </a>
                       </li>
                       <li>
                         <a href="#" className="inline-block mb-3 text-base text-white hover:text-primary">
-                          {t(language, 'footer.resourcesItems.terminologyGlossary')}
+                          Terminology Glossary
                         </a>
                       </li>
                     </ul>
@@ -334,7 +260,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 {/* Column 4: Contact */}
                 <div className="footer-section w-full px-4 sm:w-1/2 md:w-1/2 lg:w-1/3">
                   <div className="w-full mb-10">
-                    <h3 className="text-lg font-semibold text-white mb-9">{t(language, 'footer.contactUs')}</h3>
+                    <h3 className="text-lg font-semibold text-white mb-9">Contact Us</h3>
                     <address className="not-italic">
                       <p className="mb-4 text-base text-white flex items-start">
                         <svg width="16" height="20" className="mt-1 mr-3 fill-current text-primary" viewBox="0 0 29 35">
@@ -403,7 +329,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         className="fixed bottom-8 right-8 w-10 h-10 bg-primary text-white rounded-md shadow-lg hover:bg-primary/90 transition-colors z-50"
-        aria-label={t(language, 'footer.backToTop')}
+        aria-label="Back to top"
       >
         <svg className="w-5 h-5 mx-auto rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7-7m0 0l-7 7m7-7v18" />
